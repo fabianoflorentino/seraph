@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b0f17">
+  <meta name="description" content="Independent status board for the services you depend on.">
+  <title>seraph · status board</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="masthead">
+    <div class="brand">
+      <img src="favicon.svg" alt="" width="44" height="44">
+      <div>
+        <h1>seraph</h1>
+        <p class="tagline" data-i18n="tagline">protects that which matters most</p>
+      </div>
+    </div>
+    <button id="lang-toggle" class="ghost" type="button" data-i18n-aria="language" aria-label="Change language">PT-BR</button>
+  </header>
+
+  <main id="main">
+    <section class="toolbar" aria-label="Filters">
+      <label class="search">
+        <span class="sr-only" data-i18n="search">Search services</span>
+        <input id="search" type="search" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="Search by name…">
+      </label>
+
+      <div class="segmented" role="group" aria-label="View" data-i18n-aria="view">
+        <button type="button" data-view="all" aria-pressed="true" data-i18n="all">All</button>
+        <button type="button" data-view="favorites" aria-pressed="false" data-i18n="favorites">Favorites</button>
+      </div>
+
+      <div id="regions" class="regions" role="group" data-i18n-aria="regions" aria-label="Region"></div>
+    </section>
+
+    <p class="meta">
+      <span id="summary"></span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span data-i18n="updated">Updated</span>
+      <time id="updated">—</time>
+    </p>
+
+    <div id="banner" class="banner" role="alert" hidden>
+      <span id="banner-text" data-i18n="error">Could not load the latest snapshot.</span>
+      <button id="retry" class="ghost" type="button" data-i18n="retry">Retry</button>
+    </div>
+
+    <section id="groups" class="groups" aria-live="polite"></section>
+    <p id="empty" class="empty" hidden></p>
+  </main>
+
+  <footer>
+    <p data-i18n="footer">Unofficial and independent. Status data comes from official status pages and direct probes.</p>
+    <p><a href="https://github.com/fabianoflorentino/seraph" rel="noopener">GitHub</a> · MIT</p>
+  </footer>
+
+  <script src="i18n/en.js" defer></script>
+  <script src="i18n/pt-br.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
