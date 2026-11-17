@@ -1,0 +1,15 @@
+# Build artifacts
+/bin/
+coverage.out
+coverage.html
+
+# Generated snapshot (published by CI)
+site/data/*.json
+
+# Cloudflare Worker
+cloudflare/node_modules/
+cloudflare/.wrangler/
+
+# Local environment
+.env
+.DS_Store
