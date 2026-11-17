@@ -1,0 +1,30 @@
+# Script Worker (cron dispatcher), not a static-assets Worker.
+# Do not add an [assets] section here: the site is served by GitHub Pages.
+name = "seraph-dispatch"
+main = "src/index.js"
+compatibility_date = "2026-11-17"
+
+[vars]
+GITHUB_OWNER = "fabianoflorentino"
+GITHUB_REPO = "seraph"
+GITHUB_WORKFLOW = "dashboard.yml"
+GITHUB_REF = "main"
+
+[triggers]
+# Cloudflare cron is UTC. Every five minutes keeps the dashboard within the
+# 5-20 minute freshness target while GitHub Actions does the real work.
+crons = ["*/5 * * * *"]
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true

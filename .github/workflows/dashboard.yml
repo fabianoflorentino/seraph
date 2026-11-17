@@ -1,0 +1,61 @@
+name: Dashboard
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Fallback only: Cloudflare dispatches every five minutes.
+    - cron: "*/15 * * * *"
+  push:
+    branches: [main]
+    paths:
+      - "cmd/**"
+      - "internal/**"
+      - "catalog/**"
+      - "config/**"
+      - "site/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/dashboard.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Collect and build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build
+        run: |
+          go build -trimpath \
+            -ldflags "-X github.com/fabianoflorentino/seraph/internal/version.Version=${GITHUB_SHA::7} -X github.com/fabianoflorentino/seraph/internal/version.Commit=${GITHUB_SHA::7} -X github.com/fabianoflorentino/seraph/internal/version.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o bin/seraph ./cmd/seraph
+      - name: Validate catalog
+        run: ./bin/seraph validate --catalog catalog/packs
+      - name: Collect snapshot
+        run: ./bin/seraph sync --catalog catalog/packs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
