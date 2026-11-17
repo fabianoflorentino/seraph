@@ -1,0 +1,6 @@
+out_dir: site/data
+base_url: https://fabianoflorentino.github.io/seraph/data/state.json
+timeout: 8s
+concurrency: 12
+retries: 2
+log_level: info

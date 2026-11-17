@@ -1,0 +1,11 @@
+version: 1
+services:
+  - slug: github
+    name: GitHub
+    category: cloud
+    official_url: https://github.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.githubstatus.com/api/v2/summary.json
