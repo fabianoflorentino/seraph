@@ -9,6 +9,7 @@
     region: "seraph.region.v1",
     favorites: "seraph.favorites.v1",
     view: "seraph.view.v1",
+    collapsed: "seraph.collapsed.v1",
   };
   const CATEGORY_ORDER = [
     "banking",
@@ -16,6 +17,7 @@
     "telecom",
     "messaging",
     "social",
+    "ai",
     "cloud",
     "streaming",
     "gaming",
@@ -31,6 +33,9 @@
     view: "all",
     query: "",
     favorites: new Set(),
+    collapsed: new Set(),
+    statusFilter: "",
+    visibleCategories: [],
     snapshot: null,
     timer: null,
   };
@@ -39,7 +44,9 @@
     langToggle: document.getElementById("lang-toggle"),
     search: document.getElementById("search"),
     regions: document.getElementById("regions"),
+    segmented: document.querySelector(".segmented"),
     summary: document.getElementById("summary"),
+    overview: document.getElementById("overview"),
     updated: document.getElementById("updated"),
     banner: document.getElementById("banner"),
     bannerText: document.getElementById("banner-text"),
@@ -71,6 +78,19 @@
     } catch {
       return new Set();
     }
+  }
+
+  function loadCollapsed() {
+    try {
+      const parsed = JSON.parse(readStore(STORAGE.collapsed) || "[]");
+      return new Set(Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveCollapsed() {
+    writeStore(STORAGE.collapsed, JSON.stringify([...state.collapsed]));
   }
 
   function t(key, vars) {
@@ -139,7 +159,9 @@
       node.setAttribute("aria-label", t(node.dataset.i18nAria));
     }
 
-    els.langToggle.textContent = state.lang === "en" ? "PT-BR" : "EN";
+    els.langToggle.setAttribute("aria-checked", String(state.lang === "pt-br"));
+    els.langToggle.setAttribute("aria-label", t("language"));
+    els.langToggle.dataset.lang = state.lang;
     els.bannerText.textContent = t("error");
     els.search.value = state.query;
   }
@@ -168,6 +190,12 @@
       state.region = "global";
     }
 
+    els.regions.hidden = regions.length < 2;
+
+    if (els.regions.hidden) {
+      return;
+    }
+
     for (const region of regions) {
       const button = document.createElement("button");
       button.type = "button";
@@ -178,12 +206,26 @@
     }
   }
 
+  function scopedServices() {
+    return (state.snapshot?.services || []).filter((service) => {
+      if (!(service.regions || []).includes(state.region)) {
+        return false;
+      }
+
+      return state.view !== "favorites" || state.favorites.has(service.slug);
+    });
+  }
+
   function matchesFilters(service) {
     if (!(service.regions || []).includes(state.region)) {
       return false;
     }
 
     if (state.view === "favorites" && !state.favorites.has(service.slug)) {
+      return false;
+    }
+
+    if (state.statusFilter === "attention" && service.status === "operational") {
       return false;
     }
 
@@ -217,19 +259,27 @@
     article.className = "card";
     article.dataset.status = service.status || "unknown";
 
+    const targetURL = service.status_url || service.official_url;
+
+    if (targetURL) {
+      article.classList.add("card--linked");
+
+      const link = document.createElement("a");
+      link.className = "card-link";
+      link.href = targetURL;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.setAttribute(
+        "aria-label",
+        t(service.status_url ? "openStatus" : "openOfficial", { name: service.name }),
+      );
+      article.append(link);
+    }
+
     const header = document.createElement("header");
 
     const title = document.createElement("h3");
-    if (service.official_url) {
-      const link = document.createElement("a");
-      link.href = service.official_url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = service.name;
-      title.append(link);
-    } else {
-      title.textContent = service.name;
-    }
+    title.textContent = service.name;
 
     const star = document.createElement("button");
     star.type = "button";
@@ -260,11 +310,22 @@
     parts.push(`${t("checked")}: ${formatTime(service.observed_at)}`);
     details.textContent = parts.join(" · ");
 
-    const meta = document.createElement("p");
-    meta.className = "category";
-    meta.textContent = categoryLabel(service.category);
+    const tags = document.createElement("div");
+    tags.className = "tags";
 
-    article.append(header, meta, status, details);
+    const categoryTag = document.createElement("span");
+    categoryTag.className = "tag";
+    categoryTag.textContent = categoryLabel(service.category);
+    tags.append(categoryTag);
+
+    for (const region of service.regions || []) {
+      const regionTag = document.createElement("span");
+      regionTag.className = "tag tag--region";
+      regionTag.textContent = regionLabel(region);
+      tags.append(regionTag);
+    }
+
+    article.append(header, tags, status, details);
 
     if (service.error) {
       const error = document.createElement("p");
@@ -313,21 +374,65 @@
       }
     }
 
+    state.visibleCategories = order;
+
     for (const category of order) {
       const items = grouped.get(category).sort((a, b) => {
         const rank = (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9);
         return rank !== 0 ? rank : a.name.localeCompare(b.name);
       });
+      const attentionCount = items.filter((service) => service.status !== "operational").length;
+
+      const label = categoryLabel(category);
+      const collapsed = state.collapsed.has(category);
+      const bodyId = `group-body-${category}`;
 
       const section = document.createElement("section");
       section.className = "group";
+      section.dataset.category = category;
 
-      const heading = document.createElement("h2");
-      heading.textContent = `${categoryLabel(category)}`;
+      if (collapsed) {
+        section.classList.add("collapsed");
+      }
+
+      const head = document.createElement("button");
+      head.type = "button";
+      head.className = "group-head";
+      head.setAttribute("aria-controls", bodyId);
+      head.setAttribute("aria-expanded", String(!collapsed));
+      head.setAttribute("aria-label", categoryAriaLabel(label, items.length, collapsed, attentionCount));
+
+      const title = document.createElement("span");
+      title.className = "group-title";
+      title.textContent = label;
+
       const count = document.createElement("span");
       count.className = "count";
       count.textContent = String(items.length);
-      heading.append(count);
+
+      head.append(title, count);
+
+      if (attentionCount > 0) {
+        const alert = document.createElement("span");
+        alert.className = "group-alert";
+        alert.textContent = String(attentionCount);
+        alert.setAttribute("aria-label", t("attentionCount", { count: attentionCount }));
+        head.append(alert);
+      }
+
+      const toggle = document.createElement("span");
+      toggle.className = "group-toggle";
+      toggle.setAttribute("aria-hidden", "true");
+      toggle.innerHTML = '<span class="chevron"></span>';
+      head.append(toggle);
+
+      const body = document.createElement("div");
+      body.className = "group-body";
+      body.id = bodyId;
+      body.setAttribute("aria-hidden", String(collapsed));
+
+      const inner = document.createElement("div");
+      inner.className = "group-body-inner";
 
       const grid = document.createElement("div");
       grid.className = "grid";
@@ -336,32 +441,205 @@
         grid.append(buildCard(service));
       }
 
-      section.append(heading, grid);
+      inner.append(grid);
+      body.append(inner);
+
+      head.addEventListener("click", () => {
+        const isCollapsed = section.classList.toggle("collapsed");
+        head.setAttribute("aria-expanded", String(!isCollapsed));
+        head.setAttribute("aria-label", categoryAriaLabel(label, items.length, isCollapsed, attentionCount));
+        body.setAttribute("aria-hidden", String(isCollapsed));
+
+        if (isCollapsed) {
+          state.collapsed.add(category);
+        } else {
+          state.collapsed.delete(category);
+        }
+
+        saveCollapsed();
+        renderOverview();
+      });
+
+      section.append(head, body);
       els.groups.append(section);
     }
 
     updateSummary(services.length);
+    renderOverview();
+  }
+
+  function categoryAriaLabel(label, count, collapsed, attention) {
+    let text = t(collapsed ? "expandCategory" : "collapseCategory", { name: label, count });
+
+    if (attention > 0) {
+      text += ` · ${t("attentionCount", { count: attention })}`;
+    }
+
+    return text;
+  }
+
+  function overviewCard(label, value, meta, tone, onClick, pressed) {
+    const card = document.createElement(onClick ? "button" : "article");
+    card.className = `overview-card${tone ? ` overview-card--${tone}` : ""}`;
+
+    if (onClick) {
+      card.type = "button";
+      card.classList.add("overview-card--action");
+      card.setAttribute("aria-label", `${label}: ${value} · ${meta}`);
+      card.addEventListener("click", onClick);
+
+      if (typeof pressed === "boolean") {
+        card.setAttribute("aria-pressed", String(pressed));
+
+        if (pressed) {
+          card.classList.add("overview-card--active");
+        }
+      }
+    }
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "overview-label";
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement("strong");
+    valueEl.className = "overview-value";
+    valueEl.textContent = value;
+
+    const metaEl = document.createElement("span");
+    metaEl.className = "overview-meta";
+    metaEl.textContent = meta;
+
+    card.append(labelEl, valueEl, metaEl);
+
+    return card;
+  }
+
+  function renderOverview() {
+    const services = scopedServices();
+    const total = services.length;
+    const operational = services.filter((service) => service.status === "operational").length;
+    const attention = total - operational;
+    const categories = new Set(services.map((service) => service.category || "other")).size;
+    const percent = total > 0 ? Math.round((operational / total) * 100) : 0;
+    const filtering = state.statusFilter === "attention";
+
+    const allCollapsed = state.visibleCategories.length > 0
+      && state.visibleCategories.every((category) => state.collapsed.has(category));
+    const actionLabel = state.visibleCategories.length > 0
+      ? t(allCollapsed ? "overviewExpandAll" : "overviewCollapseAll")
+      : t("overviewNoGroups");
+
+    const attentionMeta = total === 0
+      ? t("overviewNoServices")
+      : attention === 0
+        ? t("overviewAllGood")
+        : filtering
+          ? t("overviewClearFilter")
+          : t("overviewFilter");
+
+    els.overview.replaceChildren(
+      overviewCard(
+        t("overviewServices"),
+        String(total),
+        filtering ? t("overviewShowAll") : regionLabel(state.region),
+        "",
+        filtering ? clearStatusFilter : null,
+      ),
+      overviewCard(t("overviewOperational"), String(operational), t("overviewPercent", { percent })),
+      overviewCard(
+        t("overviewAttention"),
+        String(attention),
+        attentionMeta,
+        attention > 0 ? "attention" : "ok",
+        attention > 0 || filtering ? toggleAttentionFilter : null,
+        filtering,
+      ),
+      overviewCard(
+        t("overviewCategories"),
+        String(categories),
+        actionLabel,
+        state.visibleCategories.length > 0 ? "action" : "",
+        state.visibleCategories.length > 0 ? toggleAllCategories : null,
+      ),
+    );
+  }
+
+  function toggleAttentionFilter() {
+    state.statusFilter = state.statusFilter === "attention" ? "" : "attention";
+
+    if (state.statusFilter === "attention") {
+      const categories = new Set(
+        scopedServices()
+          .filter((service) => service.status !== "operational")
+          .map((service) => service.category || "other"),
+      );
+
+      for (const category of categories) {
+        state.collapsed.delete(category);
+      }
+
+      saveCollapsed();
+    }
+
+    render();
+  }
+
+  function clearStatusFilter() {
+    if (!state.statusFilter) {
+      return;
+    }
+
+    state.statusFilter = "";
+    render();
+  }
+
+  function toggleAllCategories() {
+    if (state.visibleCategories.length === 0) {
+      return;
+    }
+
+    const allCollapsed = state.visibleCategories.every(
+      (category) => state.collapsed.has(category),
+    );
+
+    for (const category of state.visibleCategories) {
+      if (allCollapsed) {
+        state.collapsed.delete(category);
+      } else {
+        state.collapsed.add(category);
+      }
+    }
+
+    saveCollapsed();
+    renderGroups();
   }
 
   function updateSummary(shown) {
-    const inRegion = (state.snapshot?.services || []).filter((service) =>
-      (service.regions || []).includes(state.region));
+    const inRegion = scopedServices();
 
     const total = state.view === "favorites"
       ? inRegion.filter((service) => state.favorites.has(service.slug)).length
       : inRegion.length;
 
-    els.summary.textContent = t("summary", {
-      count: shown,
-      total,
-      region: regionLabel(state.region),
-    });
+    const regions = availableRegions();
+    const key = regions.length > 1 ? "summary" : "summarySingle";
+    const vars = { count: shown, total };
+
+    if (key === "summary") {
+      vars.region = regionLabel(state.region);
+    }
+
+    els.summary.textContent = t(key, vars);
 
     els.empty.hidden = shown > 0;
     if (shown === 0) {
-      els.empty.textContent = state.view === "favorites" && state.snapshot
-        ? t("emptyFavorites")
-        : t("empty");
+      if (state.statusFilter === "attention") {
+        els.empty.textContent = t("emptyAttention");
+      } else {
+        els.empty.textContent = state.view === "favorites" && state.snapshot
+          ? t("emptyFavorites")
+          : t("empty");
+      }
     }
   }
 
@@ -371,8 +649,9 @@
 
     els.updated.textContent = formatTime(state.snapshot?.generated_at);
     els.updated.dateTime = state.snapshot?.generated_at || "";
+    els.segmented.dataset.view = state.view;
 
-    for (const button of document.querySelectorAll("[data-view]")) {
+    for (const button of els.segmented.querySelectorAll("button[data-view]")) {
       button.setAttribute("aria-pressed", String(button.dataset.view === state.view));
     }
   }
@@ -484,6 +763,7 @@
     state.region = readStore(STORAGE.region) || "global";
     state.view = readStore(STORAGE.view) === "favorites" ? "favorites" : "all";
     state.favorites = loadFavorites();
+    state.collapsed = loadCollapsed();
 
     bind();
     applyStaticTranslations();
