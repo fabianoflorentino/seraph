@@ -99,6 +99,30 @@ footer {
   gap: 0.85rem;
 }
 
+.masthead-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.masthead-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.masthead-buttons .ghost {
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.meta.is-stale time {
+  color: var(--degraded);
+}
+
 .brand img {
   filter: drop-shadow(0 6px 18px rgba(246, 211, 101, 0.25));
 }
@@ -370,7 +394,7 @@ main {
 
 .overview {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
   margin: 0 0 1.4rem;
 }
@@ -421,6 +445,10 @@ main {
 
 .overview-card--attention .overview-value {
   color: var(--degraded);
+}
+
+.overview-card--outage .overview-value {
+  color: var(--major);
 }
 
 .overview-card--action {
@@ -1060,7 +1088,7 @@ footer a {
 
 @media (max-width: 900px) {
   .overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1073,8 +1101,17 @@ footer a {
     padding-top: 1.4rem;
   }
 
+  .masthead-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

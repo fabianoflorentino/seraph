@@ -24,13 +24,19 @@
         <p class="tagline" data-i18n="tagline">protects that which matters most</p>
       </div>
     </div>
-    <button id="lang-toggle" class="lang-switch" type="button" role="switch" aria-checked="false" data-lang="en" data-i18n-aria="language" aria-label="Change language">
-      <span class="lang-switch-track" aria-hidden="true">
-        <span class="lang-switch-knob"></span>
-        <span class="lang-switch-label" data-lang-label="en">EN</span>
-        <span class="lang-switch-label" data-lang-label="pt-br">PT-BR</span>
-      </span>
-    </button>
+    <div class="masthead-actions">
+      <div class="masthead-buttons">
+        <button id="refresh" class="ghost" type="button" data-i18n="refresh">Refresh</button>
+        <a class="ghost" href="https://github.com/fabianoflorentino/seraph/actions/workflows/dashboard.yml" target="_blank" rel="noopener noreferrer" data-i18n="workflow">Workflow</a>
+      </div>
+      <button id="lang-toggle" class="lang-switch" type="button" role="switch" aria-checked="false" data-lang="en" data-i18n-aria="language" aria-label="Change language">
+        <span class="lang-switch-track" aria-hidden="true">
+          <span class="lang-switch-knob"></span>
+          <span class="lang-switch-label" data-lang-label="en">EN</span>
+          <span class="lang-switch-label" data-lang-label="pt-br">PT-BR</span>
+        </span>
+      </button>
+    </div>
   </header>
 
   <main id="main">
@@ -49,7 +55,7 @@
       <div id="regions" class="regions" role="group" data-i18n-aria="regions" aria-label="Region"></div>
     </section>
 
-    <p class="meta">
+    <p id="update-meta" class="meta">
       <span id="summary"></span>
       <span class="sep" aria-hidden="true">·</span>
       <span data-i18n="updated">Updated</span>

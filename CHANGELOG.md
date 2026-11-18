@@ -28,9 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GitHub now links to its status page.
 - Collapsible category sections with persisted state, attention badges, and an
   overview with service/status/category counts.
-- The Attention and Operational overview cards filter services; the Services
-  card clears the filter and Categories toggles collapse state. Filter changes
-  use a reduced-motion-aware view transition.
+- The Operational, Attention, and Outage overview cards filter services; the
+  Services card clears the filter and Categories toggles collapse state.
+  Filter changes use a reduced-motion-aware view transition.
+- Relative update age with a stale indicator at 20 minutes, a manual snapshot
+  refresh button, and a direct link to the Dashboard workflow.
 - History retention across runs (up to 288 points per service) and a 24-hour
   availability ranking on the dashboard.
 - Installable PWA shell with manifest, icons, service worker, and offline

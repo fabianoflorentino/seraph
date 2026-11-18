@@ -28,8 +28,9 @@ care about. seraph inverts that:
   aggregators.
 - **Real freshness** — a reliable five-minute cron publishes a snapshot every
   5–20 minutes.
-- **At a glance** — overview cards, attention/operational filters, collapsible
-  categories, and a 24-hour availability ranking once history builds up.
+- **At a glance** — overview cards, operational/attention/outage filters,
+  collapsible categories, and a 24-hour availability ranking once history
+  builds up.
 - **Installable** — PWA shell with an offline fallback; notifications come
   later.
 - **Yours** — unlimited favorites and named collections per region, stored only

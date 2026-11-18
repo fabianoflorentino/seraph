@@ -1,4 +1,4 @@
-const CACHE = "seraph-shell-v5";
+const CACHE = "seraph-shell-v7";
 const SCOPE = new URL("./", self.location.href);
 const SHELL = [
   "./",

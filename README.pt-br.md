@@ -28,7 +28,7 @@ serviços que importam. O seraph inverte isso:
   de agregadores.
 - **Frescor real** — um cron confiável de cinco minutos publica um snapshot a
   cada 5–20 minutos.
-- **Visão rápida** — cards de resumo, filtros de atenção/operacionais,
+- **Visão rápida** — cards de resumo, filtros de operacionais/atenção/queda,
   categorias recolhíveis e ranking de disponibilidade de 24h quando houver
   histórico.
 - **Instalável** — PWA com fallback offline; notificações ficam para depois.

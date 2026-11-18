@@ -30,6 +30,7 @@
   const STATUS_RANK = { major: 0, degraded: 1, unknown: 2, operational: 3 };
   const AVAILABILITY_WINDOW_MS = 24 * 60 * 60 * 1000;
   const MIN_AVAILABILITY_POINTS = 3;
+  const STALE_AFTER_MS = 20 * 60 * 1000;
   const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 
@@ -41,6 +42,7 @@
     favorites: new Set(),
     collections: [],
     activeCollection: "",
+    refreshing: false,
     collapsed: new Set(),
     statusFilter: "",
     visibleCategories: [],
@@ -50,6 +52,8 @@
 
   const els = {
     langToggle: document.getElementById("lang-toggle"),
+    refresh: document.getElementById("refresh"),
+    meta: document.getElementById("update-meta"),
     search: document.getElementById("search"),
     regions: document.getElementById("regions"),
     segmented: document.querySelector(".segmented"),
@@ -550,12 +554,16 @@
   }
 
   function matchesStatus(service, filter) {
-    if (filter === "attention") {
-      return service.status !== "operational";
-    }
-
     if (filter === "operational") {
       return service.status === "operational";
+    }
+
+    if (filter === "attention") {
+      return service.status === "degraded" || service.status === "unknown";
+    }
+
+    if (filter === "outage") {
+      return service.status === "major";
     }
 
     return true;
@@ -597,6 +605,39 @@
       dateStyle: "medium",
       timeStyle: "short",
     }).format(date);
+  }
+
+  function formatRelative(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    const diff = Math.max(0, Date.now() - date.getTime());
+    if (diff < 60_000) {
+      return t("justNow");
+    }
+
+    try {
+      const formatter = new Intl.RelativeTimeFormat(
+        state.lang === "pt-br" ? "pt-BR" : "en",
+        { numeric: "auto" },
+      );
+      const minutes = Math.floor(diff / 60_000);
+
+      if (minutes < 60) {
+        return formatter.format(-minutes, "minute");
+      }
+
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) {
+        return formatter.format(-hours, "hour");
+      }
+
+      return formatter.format(-Math.floor(hours / 24), "day");
+    } catch {
+      return "";
+    }
   }
 
   function buildCard(service) {
@@ -893,12 +934,16 @@
     const services = scopedServices();
     const total = services.length;
     const operational = services.filter((service) => service.status === "operational").length;
-    const attention = total - operational;
+    const attention = services.filter(
+      (service) => service.status === "degraded" || service.status === "unknown",
+    ).length;
+    const outage = services.filter((service) => service.status === "major").length;
     const categories = new Set(services.map((service) => service.category || "other")).size;
     const percent = total > 0 ? Math.round((operational / total) * 100) : 0;
     const filtering = state.statusFilter !== "";
     const attentionFiltering = state.statusFilter === "attention";
     const operationalFiltering = state.statusFilter === "operational";
+    const outageFiltering = state.statusFilter === "outage";
 
     const allCollapsed = state.visibleCategories.length > 0
       && state.visibleCategories.every((category) => state.collapsed.has(category));
@@ -919,6 +964,13 @@
         ? t("overviewClearFilter")
         : operational === 0
           ? t("overviewNoneOperational")
+          : t("overviewFilter");
+    const outageMeta = total === 0
+      ? t("overviewNoServices")
+      : outageFiltering
+        ? t("overviewClearFilter")
+        : outage === 0
+          ? t("overviewNoOutages")
           : t("overviewFilter");
 
     els.overview.replaceChildren(
@@ -946,6 +998,14 @@
         attentionFiltering,
       ),
       overviewCard(
+        t("overviewOutage"),
+        String(outage),
+        outageMeta,
+        outage > 0 ? "outage" : "ok",
+        outage > 0 || outageFiltering ? toggleOutageFilter : null,
+        outageFiltering,
+      ),
+      overviewCard(
         t("overviewCategories"),
         String(categories),
         actionLabel,
@@ -961,6 +1021,10 @@
 
   function toggleOperationalFilter() {
     toggleStatusFilter("operational");
+  }
+
+  function toggleOutageFilter() {
+    toggleStatusFilter("outage");
   }
 
   function toggleStatusFilter(filter) {
@@ -1142,6 +1206,8 @@
         els.empty.textContent = t("emptyAttention");
       } else if (state.statusFilter === "operational") {
         els.empty.textContent = t("emptyOperational");
+      } else if (state.statusFilter === "outage") {
+        els.empty.textContent = t("emptyOutage");
       } else {
         els.empty.textContent = state.view === "favorites" && state.snapshot
           ? t("emptyFavorites")
@@ -1156,8 +1222,18 @@
     renderAvailability();
     renderFavoritesTools();
 
-    els.updated.textContent = formatTime(state.snapshot?.generated_at);
-    els.updated.dateTime = state.snapshot?.generated_at || "";
+    const generated = state.snapshot?.generated_at;
+    const absolute = formatTime(generated);
+    const relative = generated ? formatRelative(generated) : "";
+    const parsed = generated ? Date.parse(generated) : Number.NaN;
+    const stale = !Number.isNaN(parsed) && Date.now() - parsed > STALE_AFTER_MS;
+
+    els.updated.textContent = relative
+      ? `${absolute} · ${relative}${stale ? ` · ${t("stale")}` : ""}`
+      : absolute;
+    els.updated.dateTime = generated || "";
+    els.updated.title = absolute;
+    els.meta.classList.toggle("is-stale", stale);
     els.segmented.dataset.view = state.view;
 
     for (const button of els.segmented.querySelectorAll("button[data-view]")) {
@@ -1170,6 +1246,14 @@
   }
 
   async function refresh() {
+    if (state.refreshing) {
+      return;
+    }
+
+    state.refreshing = true;
+    els.refresh.disabled = true;
+    els.refresh.setAttribute("aria-busy", "true");
+
     try {
       const response = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) {
@@ -1187,6 +1271,10 @@
     } catch {
       showError(true);
       render();
+    } finally {
+      state.refreshing = false;
+      els.refresh.disabled = false;
+      els.refresh.removeAttribute("aria-busy");
     }
   }
 
@@ -1232,6 +1320,10 @@
     });
 
     els.retry.addEventListener("click", () => {
+      refresh();
+    });
+
+    els.refresh.addEventListener("click", () => {
       refresh();
     });
 
