@@ -1,0 +1,67 @@
+# Local development stack: Hugo live-reload site + a collector loop that keeps
+# writing site/static/data/state.json. The Worker is not needed locally; use
+# `wrangler dev` from cloudflare/ when working on the dispatcher.
+#
+# Usage (prefer the Makefile targets, which pass UID/GID for file ownership):
+#   UID=$(id -u) GID=$(id -g) docker compose up -d --build
+#   open http://localhost:1314
+
+name: seraph-dev
+
+services:
+  site:
+    image: hugomods/hugo:0.158.0
+    working_dir: /src
+    command:
+      - hugo
+      - server
+      - --bind
+      - 0.0.0.0
+      - --baseURL
+      - http://localhost:${SITE_PORT:-1314}/
+      - --port
+      - "1313"
+      - --watch
+      - --disableFastRender
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      HUGO_CACHEDIR: /tmp/hugo-cache
+      HUGO_ENVIRONMENT: development
+      TZ: UTC
+    ports:
+      - "${SITE_PORT:-1314}:1313"
+    volumes:
+      - ./site:/src
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1313/"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      HOME: /tmp
+      TZ: UTC
+      SERAPH_DEV_INTERVAL: "${SERAPH_DEV_INTERVAL:-60}"
+    volumes:
+      - ./catalog:/app/catalog:ro
+      - ./config:/app/config:ro
+      - ./site/static/data:/app/site/static/data
+    depends_on:
+      site:
+        condition: service_healthy
+    init: true
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          ./bin/seraph validate --catalog catalog/packs &&
+          ./bin/seraph sync --catalog catalog/packs
+          sleep "$${SERAPH_DEV_INTERVAL:-60}"
+        done

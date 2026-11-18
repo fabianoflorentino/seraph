@@ -1,0 +1,22 @@
+# Development image for the collector loop used by docker compose.
+FROM golang:1.27-alpine AS build
+
+WORKDIR /src
+
+ENV CGO_ENABLED=0
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY cmd ./cmd
+COPY internal ./internal
+
+RUN go build -trimpath -ldflags="-s -w" -o /out/seraph ./cmd/seraph
+
+FROM alpine:3
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=build /out/seraph ./bin/seraph

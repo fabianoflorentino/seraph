@@ -1,0 +1,10 @@
+.git
+.github
+bin
+coverage.out
+coverage.html
+site/public
+site/resources
+site/static/data/*.json
+cloudflare/node_modules
+cloudflare/.wrangler
