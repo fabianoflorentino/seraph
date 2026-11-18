@@ -94,10 +94,12 @@ deploying. Details and overrides: [DEVELOPMENT.md](DEVELOPMENT.md).
 `schema_version` is independent from the application version. Breaking changes
 bump it; readers reject unknown versions with `ErrUnsupportedSchema`. Each
 service carries status, region membership, observation time, optional latency,
-optional error, optional `official_url` and `status_url`, and a short history
-series. The dashboard links cards to `status_url` when present, falling back to
-`official_url`. It treats every field as optional except `slug`, `name`,
-`category`, `regions`, and `status`.
+optional error, optional `official_url` and `status_url`, and a history series.
+The CLI merges the previous snapshot, caps each series at 288 points (about 24h
+at five-minute cadence), and the dashboard computes a 24-hour availability
+ranking from those points. The dashboard links cards to `status_url` when
+present, falling back to `official_url`. It treats every field as optional
+except `slug`, `name`, `category`, `regions`, and `status`.
 
 Favorites are deliberately **not** in the snapshot. They live in
 `localStorage` under `seraph.*.v1` keys, so the published artifact stays
@@ -117,7 +119,7 @@ anonymous and cacheable.
 
 ## Roadmap
 
-1. `internal/collector`: status.io, RSS, and probe implementations.
-2. History retention across runs (merge previous `state.json`).
-3. PWA install with local notifications for favorites.
-4. Per-region latency comparisons (multiple probe locations).
+1. `internal/collector`: probe implementation for official health endpoints.
+2. PWA install with local notifications for favorites.
+3. Per-region latency comparisons (multiple probe locations).
+4. Expand the verified catalog and region coverage.

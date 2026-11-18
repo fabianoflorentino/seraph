@@ -26,8 +26,8 @@ serviços que importam. O seraph inverte isso:
   de agregadores.
 - **Frescor real** — um cron confiável de cinco minutos publica um snapshot a
   cada 5–20 minutos.
-- **Visão rápida** — cards de resumo, filtro de atenção e categorias
-  recolhíveis, com os alertas sempre visíveis.
+- **Visão rápida** — cards de resumo, filtro de atenção, categorias recolhíveis
+  e ranking de disponibilidade de 24h quando houver histórico.
 - **Seu** — favoritos ilimitados por região, guardados apenas no `localStorage`.
 - **Simples e barato** — GitHub Pages + um Worker da Cloudflare. Custo mensal
   zero, nenhuma infraestrutura para atualizar.
@@ -208,7 +208,8 @@ lefthook install
 - **M2** — primeiro serviço brasileiro, exercitando regiões de ponta a ponta.
 - **M3** — coletor `probe` para endpoints oficiais de saúde.
 - **M4** — ampliar o catálogo para ~50 serviços, Brasil + global.
-- **Depois** — histórico, PWA instalável com notificações.
+- **Histórico (concluído)** — retenção de 24h e ranking de disponibilidade.
+- **Depois** — PWA instalável com notificações.
 
 ## Licença
 

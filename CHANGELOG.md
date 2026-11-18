@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   overview with service/status/category counts.
 - The Attention overview card filters non-operational services; the Services
   card clears the filter and Categories toggles collapse state.
+- History retention across runs (up to 288 points per service) and a 24-hour
+  availability ranking on the dashboard.
 - `seraph catalog add` and `make catalog-add` for validated YAML catalog edits.
 - Category and region tags on service cards; the region filter only appears
   when more than one region is available.

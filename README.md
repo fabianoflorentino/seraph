@@ -26,21 +26,21 @@ care about. seraph inverts that:
   aggregators.
 - **Real freshness** — a reliable five-minute cron publishes a snapshot every
   5–20 minutes.
-- **At a glance** — overview cards, an attention filter, and collapsible
-  categories, with status attention kept visible.
+- **At a glance** — overview cards, an attention filter, collapsible
+  categories, and a 24-hour availability ranking once history builds up.
 - **Yours** — unlimited favorites per region, stored only in `localStorage`.
 - **Boring and cheap** — GitHub Pages + one Cloudflare Worker. Zero monthly cost,
   no infrastructure to patch.
 
 ## Status
 
-Milestone **M1 (collector)** is complete: `seraph sync` now reads Atlassian
-Statuspage documents, status.io documents, service-specific JSON endpoints, and
-RSS feeds concurrently, retries transient failures, and fails soft per service. The
-initial catalog has 24 services across cloud, AI, social, streaming, gaming,
-ecommerce, payments, and messaging, including AWS and Google Cloud. `probe`
-sources still render as `unknown`
-with an error note until that collector lands.
+`seraph sync` reads Atlassian Statuspage documents, status.io documents,
+service-specific JSON endpoints, and RSS feeds concurrently, retries transient
+failures, and fails soft per service. It merges the previous snapshot so the
+dashboard can show a 24-hour availability ranking. The initial catalog has 24
+services across cloud, AI, social, streaming, gaming, ecommerce, payments, and
+messaging, including AWS and Google Cloud. `probe` sources still render as
+`unknown` with an error note until that collector lands.
 
 ## How it works
 
@@ -207,7 +207,8 @@ lefthook install
 - **M2** — first Brazilian service, exercising regions end to end.
 - **M3** — `probe` collector for official health endpoints.
 - **M4** — expand the catalog toward ~50 services, Brazil + global.
-- **Later** — history retention, installable PWA with notifications.
+- **History (done)** — 24-hour retention and availability ranking.
+- **Later** — installable PWA with notifications.
 
 ## License
 

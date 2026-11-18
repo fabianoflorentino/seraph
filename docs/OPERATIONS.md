@@ -32,6 +32,10 @@ English | [Português](OPERATIONS.pt-br.md)
 - A GitHub `schedule` entry every 15 minutes is a fallback if the Worker fails.
 - Pushing to `main` also refreshes the site, which keeps catalog edits visible
   immediately.
+- Before collecting, the workflow restores the last published `state.json` from
+  Pages. `sync` merges its points (up to 288 per service, about 24h at the
+  five-minute cadence) so availability survives ephemeral runners. If the
+  restore fails, the run starts history fresh.
 
 ## Local commands
 
@@ -94,6 +98,7 @@ Precedence is **flag > environment > file > default**.
 | Banner in the dashboard, old data    | Pages deploy failed                             | Inspect the latest Actions run; data stays stale, not lost. |
 | Catalog valid but card missing       | Region or favorites filter                      | Check the region buttons and the favorites toggle.       |
 | Card shows `unknown` with an error   | Source unreachable, HTTP error, or bad payload  | Open the status page, then check the workflow log for the service slug. |
+| Availability panel missing           | Fewer than three observations in 24h            | Let the collector run; history forms after a few checks.                 |
 
 ## Incident playbook
 

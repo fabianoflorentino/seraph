@@ -34,6 +34,10 @@
 - Há um `schedule` do GitHub a cada 15 minutos como fallback se o Worker falhar.
 - Push em `main` também atualiza o site, deixando edições de catálogo visíveis
   imediatamente.
+- Antes da coleta, o workflow restaura o último `state.json` publicado no Pages.
+  O `sync` mescla os pontos (até 288 por serviço, cerca de 24h na cadência de
+  cinco minutos) para a disponibilidade sobreviver aos runners efêmeros. Se a
+  restauração falhar, a execução começa o histórico do zero.
 
 ## Comandos locais
 
@@ -96,6 +100,7 @@ existe. A precedência é **flag > ambiente > arquivo > padrão**.
 | Banner no painel, dados antigos       | Deploy do Pages falhou                           | Ver a última execução em Actions; dados ficam antigos, não somem. |
 | Catálogo válido mas card ausente      | Filtro de região ou favoritos                    | Conferir os botões de região e a aba de favoritos.       |
 | Card `unknown` com erro               | Fonte inacessível, erro HTTP ou payload inválido | Abrir a status page e conferir o log do workflow para o slug do serviço. |
+| Painel de disponibilidade ausente     | Menos de três observações em 24h                 | Aguardar o coletor; o histórico aparece após algumas verificações.       |
 
 ## Playbook de incidente
 

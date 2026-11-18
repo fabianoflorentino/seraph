@@ -93,9 +93,12 @@ publicar. Detalhes e overrides: [DEVELOPMENT.pt-br.md](DEVELOPMENT.pt-br.md).
 incrementam o número; leitores rejeitam versões desconhecidas com
 `ErrUnsupportedSchema`. Cada serviço traz status, regiões, horário da
 observação, latência opcional, erro opcional, `official_url` e `status_url`
-opcionais, além de um histórico curto. O painel usa `status_url` como link do
-card quando presente, com fallback para `official_url`. Trata todo campo como
-opcional, exceto `slug`, `name`, `category`, `regions` e `status`.
+opcionais, além de um histórico. A CLI mescla o snapshot anterior, limita cada
+série a 288 pontos (cerca de 24h a cada cinco minutos) e o painel calcula um
+ranking de disponibilidade de 24h a partir desses pontos. O painel usa
+`status_url` como link do card quando presente, com fallback para `official_url`.
+Trata todo campo como opcional, exceto `slug`, `name`, `category`, `regions` e
+`status`.
 
 Favoritos **não** entram no snapshot. Eles ficam no `localStorage` sob chaves
 `seraph.*.v1`, mantendo o artefato público anônimo e cacheável.
@@ -114,7 +117,7 @@ Favoritos **não** entram no snapshot. Eles ficam no `localStorage` sob chaves
 
 ## Roadmap
 
-1. `internal/collector`: implementações status.io, RSS e probe.
-2. Retenção de histórico entre execuções (merge do `state.json` anterior).
-3. PWA instalável com notificações locais para favoritos.
-4. Comparação de latência por região (múltiplos locais de sondagem).
+1. `internal/collector`: implementação de probe para endpoints oficiais de saúde.
+2. PWA instalável com notificações locais para favoritos.
+3. Comparação de latência por região (múltiplos locais de sondagem).
+4. Ampliar catálogo verificado e cobertura de regiões.
