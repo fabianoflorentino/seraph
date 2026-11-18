@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -15,17 +16,24 @@ import (
 type rootOptions struct {
 	configPath string
 	logLevel   string
+	httpClient *http.Client
 }
 
 // NewRootCommand builds the seraph command tree.
 func NewRootCommand() *cobra.Command {
-	opts := &rootOptions{}
+	return newRootCommand(&rootOptions{httpClient: &http.Client{}})
+}
+
+func newRootCommand(opts *rootOptions) *cobra.Command {
+	if opts.httpClient == nil {
+		opts.httpClient = &http.Client{}
+	}
 
 	cmd := &cobra.Command{
 		Use:   "seraph",
-		Short: "Monitor service status pages and publish a static dashboard",
-		Long: `seraph collects official status pages and HTTP probes for a curated
-catalog of services, then publishes a static JSON snapshot for the dashboard.
+		Short: "Monitor official status sources and publish a static dashboard",
+		Long: `seraph collects official status pages and feeds for a curated catalog of
+services, then publishes a static JSON snapshot for the dashboard.
 
 Favorites live in the browser, so no account or database is required.`,
 		Version:       versionString(),
@@ -39,6 +47,7 @@ Favorites live in the browser, so no account or database is required.`,
 
 	cmd.AddCommand(
 		newVersionCommand(),
+		newCatalogCommand(),
 		newSyncCommand(opts),
 		newValidateCommand(opts),
 	)

@@ -35,6 +35,8 @@ const (
 	CategoryMessaging Category = "messaging"
 	// CategorySocial covers social networks.
 	CategorySocial Category = "social"
+	// CategoryAI covers AI platforms and model providers.
+	CategoryAI Category = "ai"
 	// CategoryCloud covers cloud providers and developer platforms.
 	CategoryCloud Category = "cloud"
 	// CategoryStreaming covers video, music, and streaming services.
@@ -55,6 +57,7 @@ var categories = []Category{
 	CategoryTelecom,
 	CategoryMessaging,
 	CategorySocial,
+	CategoryAI,
 	CategoryCloud,
 	CategoryStreaming,
 	CategoryGaming,
@@ -91,24 +94,38 @@ const (
 	SourceStatusIO SourceType = "statusio"
 	// SourceRSS reads an incident RSS feed.
 	SourceRSS SourceType = "rss"
+	// SourceJSON reads a service-specific JSON status document.
+	SourceJSON SourceType = "json"
 	// SourceProbe checks a health endpoint directly.
 	SourceProbe SourceType = "probe"
 )
 
 func (s SourceType) valid() bool {
 	switch s {
-	case SourceStatuspage, SourceStatusIO, SourceRSS, SourceProbe:
+	case SourceStatuspage, SourceStatusIO, SourceRSS, SourceJSON, SourceProbe:
 		return true
 	default:
 		return false
 	}
 }
 
+const (
+	// JSONFormatSlack reads the Slack status current endpoint.
+	JSONFormatSlack = "slack"
+	// JSONFormatStripe reads the Stripe status current endpoint.
+	JSONFormatStripe = "stripe"
+	// JSONFormatAWS reads the AWS status event feed.
+	JSONFormatAWS = "aws"
+	// JSONFormatGCP reads the Google Cloud incidents feed.
+	JSONFormatGCP = "gcp"
+)
+
 // Source points at the endpoint used to observe a service.
 type Source struct {
 	Type      SourceType `yaml:"type"`
 	URL       string     `yaml:"url"`
 	Component string     `yaml:"component,omitempty"`
+	Format    string     `yaml:"format,omitempty"`
 }
 
 // Service is one monitored service entry in a catalog pack.
@@ -117,6 +134,7 @@ type Service struct {
 	Name        string           `yaml:"name"`
 	Category    Category         `yaml:"category"`
 	OfficialURL string           `yaml:"official_url,omitempty"`
+	StatusURL   string           `yaml:"status_url,omitempty"`
 	Regions     map[string]Level `yaml:"regions"`
 	Source      Source           `yaml:"source"`
 }
@@ -258,6 +276,12 @@ func (s Service) validate() []error {
 		}
 	}
 
+	if s.StatusURL != "" {
+		if err := validateHTTPS(s.StatusURL); err != nil {
+			add("status_url", err.Error())
+		}
+	}
+
 	if len(s.Regions) == 0 {
 		add("regions", "must declare at least one region")
 	}
@@ -290,6 +314,18 @@ func (s Service) validate() []error {
 		add("source.url", "must not be empty")
 	} else if err := validateHTTPS(s.Source.URL); err != nil {
 		add("source.url", err.Error())
+	}
+
+	if s.Source.Type == SourceJSON {
+		switch s.Source.Format {
+		case JSONFormatSlack, JSONFormatStripe, JSONFormatAWS, JSONFormatGCP:
+		case "":
+			add("source.format", "must not be empty for json sources")
+		default:
+			add("source.format", fmt.Sprintf("unsupported json format %q", s.Source.Format))
+		}
+	} else if s.Source.Format != "" {
+		add("source.format", "is only used by json sources")
 	}
 
 	if len(errs) > 0 {

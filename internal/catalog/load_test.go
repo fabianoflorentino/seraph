@@ -16,6 +16,7 @@ services:
     name: GitHub
     category: cloud
     official_url: https://github.com
+    status_url: https://www.githubstatus.com
     regions:
       global: primary
     source:
@@ -56,12 +57,45 @@ func TestLoadValid(t *testing.T) {
 		t.Errorf("Category = %q, want cloud", service.Category)
 	}
 
+	if service.StatusURL != "https://www.githubstatus.com" {
+		t.Errorf("StatusURL = %q, want status page", service.StatusURL)
+	}
+
 	if got := service.RegionList(); len(got) != 1 || got[0] != catalog.GlobalRegion {
 		t.Errorf("RegionList = %v, want [global]", got)
 	}
 
 	if service.Source.Type != catalog.SourceStatuspage {
 		t.Errorf("Source.Type = %q, want statuspage", service.Source.Type)
+	}
+}
+
+const validJSONPack = `
+version: 1
+services:
+  - slug: slack
+    name: Slack
+    category: messaging
+    official_url: https://slack.com
+    status_url: https://status.slack.com
+    regions:
+      global: primary
+    source:
+      type: json
+      format: slack
+      url: https://status.slack.com/api/v2.0.0/current
+`
+
+func TestLoadValidJSONSource(t *testing.T) {
+	t.Parallel()
+
+	cat, err := loadOne(t, "global.yaml", validJSONPack)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if got := cat.Services[0].Source.Format; got != catalog.JSONFormatSlack {
+		t.Errorf("Source.Format = %q, want slack", got)
 	}
 }
 
@@ -149,13 +183,33 @@ func TestLoadRejectsInvalidPack(t *testing.T) {
 		},
 		{
 			name:     "insecure source url",
-			contents: strings.Replace(validPack, "https://www.githubstatus.com", "http://www.githubstatus.com", 1),
+			contents: strings.Replace(validPack, "\n      url: https://www.githubstatus.com", "\n      url: http://www.githubstatus.com", 1),
 			fragment: "source.url",
 		},
 		{
 			name:     "insecure official url",
-			contents: strings.Replace(validPack, "https://github.com", "http://github.com", 1),
+			contents: strings.Replace(validPack, "official_url: https://github.com", "official_url: http://github.com", 1),
 			fragment: "official_url",
+		},
+		{
+			name:     "insecure status url",
+			contents: strings.Replace(validPack, "status_url: https://www.githubstatus.com", "status_url: http://www.githubstatus.com", 1),
+			fragment: "status_url",
+		},
+		{
+			name:     "json without format",
+			contents: strings.Replace(validPack, "type: statuspage", "type: json", 1),
+			fragment: "source.format",
+		},
+		{
+			name:     "unknown json format",
+			contents: strings.Replace(validJSONPack, "format: slack", "format: mystery", 1),
+			fragment: "source.format",
+		},
+		{
+			name:     "format on statuspage",
+			contents: strings.Replace(validPack, "type: statuspage", "type: statuspage\n      format: slack", 1),
+			fragment: "source.format",
 		},
 		{
 			name:     "duplicate slug",
