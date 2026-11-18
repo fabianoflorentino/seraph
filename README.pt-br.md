@@ -7,6 +7,8 @@
 
 [English](README.md) | **Português**
 
+**Demo:** https://seraph.fabianoflorentino.dev/
+
 O seraph é um painel de status independente e sem anúncios para os serviços dos
 quais você realmente depende: bancos, meios de pagamento, operadoras, nuvens,
 mensageiros e mais. Ele lê **status pages e feeds oficiais** e publica um
@@ -26,9 +28,12 @@ serviços que importam. O seraph inverte isso:
   de agregadores.
 - **Frescor real** — um cron confiável de cinco minutos publica um snapshot a
   cada 5–20 minutos.
-- **Visão rápida** — cards de resumo, filtro de atenção, categorias recolhíveis
-  e ranking de disponibilidade de 24h quando houver histórico.
-- **Seu** — favoritos ilimitados por região, guardados apenas no `localStorage`.
+- **Visão rápida** — cards de resumo, filtros de atenção/operacionais,
+  categorias recolhíveis e ranking de disponibilidade de 24h quando houver
+  histórico.
+- **Instalável** — PWA com fallback offline; notificações ficam para depois.
+- **Seu** — favoritos ilimitados por região, guardados apenas no `localStorage`,
+  com exportação/importação JSON e link compartilhável para backup.
 - **Simples e barato** — GitHub Pages + um Worker da Cloudflare. Custo mensal
   zero, nenhuma infraestrutura para atualizar.
 
@@ -42,6 +47,16 @@ catálogo inicial tem 24 serviços entre nuvem, IA, social, streaming, jogos,
 e-commerce, pagamentos e mensagens, incluindo AWS e Google Cloud. Fontes
 `probe` continuam como `unknown` com
 nota de erro até o coletor existir.
+
+## Privacidade e retenção
+
+Favoritos são o único dado do usuário. Eles ficam no navegador sob
+`seraph.favorites.v1`; não há conta, analytics, rastreamento ou cópia no
+servidor. A exportação gera um backup JSON, e “Copiar link” cria uma URL que
+contém apenas os slugs públicos dos serviços. Limpar os dados do site, usar
+modo privado ou trocar de navegador/dispositivo remove a cópia local — importe
+o backup ou abra o link para restaurar. Sync por conta fica deliberadamente
+para uma fase paga posterior, opt-in.
 
 ## Como funciona
 
@@ -209,7 +224,8 @@ lefthook install
 - **M3** — coletor `probe` para endpoints oficiais de saúde.
 - **M4** — ampliar o catálogo para ~50 serviços, Brasil + global.
 - **Histórico (concluído)** — retenção de 24h e ranking de disponibilidade.
-- **Depois** — PWA instalável com notificações.
+- **PWA (concluído)** — manifest, ícones, service worker e shell offline.
+- **Depois** — notificações PWA e comparação de latência por região.
 
 ## Licença
 

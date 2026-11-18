@@ -8,6 +8,8 @@
   <meta name="description" content="Independent status board for the services you depend on.">
   <title>seraph · status board</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -56,6 +58,20 @@
 
     <section id="overview" class="overview" aria-label="Overview" data-i18n-aria="overview"></section>
 
+    <section id="favorites-tools" class="favorites-tools" aria-labelledby="favorites-title" hidden>
+      <div class="favorites-copy">
+        <h2 id="favorites-title" class="favorites-title" data-i18n="favoritesTitle">Your favorites</h2>
+        <p class="favorites-notice" data-i18n="favoritesNotice">Saved only in this browser. No account, tracking, or server copy. Export a backup or copy a link to keep them.</p>
+        <p id="favorites-status" class="favorites-status" role="status" aria-live="polite"></p>
+      </div>
+      <div class="favorites-actions">
+        <button id="favorites-export" class="ghost" type="button" data-i18n="favoritesExport">Export</button>
+        <button id="favorites-import" class="ghost" type="button" data-i18n="favoritesImport">Import</button>
+        <button id="favorites-link" class="ghost" type="button" data-i18n="favoritesLink">Copy link</button>
+        <input id="favorites-file" type="file" accept="application/json,.json" hidden>
+      </div>
+    </section>
+
     <section id="availability" class="availability" aria-labelledby="availability-title" hidden>
       <div class="availability-head">
         <h2 id="availability-title" data-i18n="availabilityTitle">Most available (24h)</h2>
@@ -75,6 +91,7 @@
 
   <footer>
     <p data-i18n="footer">Unofficial and independent. Status data comes from official status sources.</p>
+    <p class="privacy-note" data-i18n="footerPrivacy">Favorites stay in this browser; export or copy a link to back them up.</p>
     <p><a href="https://github.com/fabianoflorentino/seraph" rel="noopener">GitHub</a> · MIT</p>
   </footer>
 

@@ -101,7 +101,11 @@ Trata todo campo como opcional, exceto `slug`, `name`, `category`, `regions` e
 `status`.
 
 Favoritos **não** entram no snapshot. Eles ficam no `localStorage` sob chaves
-`seraph.*.v1`, mantendo o artefato público anônimo e cacheável.
+`seraph.*.v1`, mantendo o artefato público anônimo e cacheável. Essa é a
+fronteira de privacidade: sem conta, cópia no servidor ou analytics. O usuário
+pode exportar um backup JSON versionado ou copiar um link que contém apenas
+slugs de serviços; limpar os dados do navegador ou trocar de dispositivo exige
+um desses para restaurar. Sync por conta fica para uma fase opt-in posterior.
 
 ## Escolhas de confiabilidade
 
@@ -118,6 +122,6 @@ Favoritos **não** entram no snapshot. Eles ficam no `localStorage` sob chaves
 ## Roadmap
 
 1. `internal/collector`: implementação de probe para endpoints oficiais de saúde.
-2. PWA instalável com notificações locais para favoritos.
+2. Notificações PWA para favoritos (a instalação já está implementada).
 3. Comparação de latência por região (múltiplos locais de sondagem).
 4. Ampliar catálogo verificado e cobertura de regiões.

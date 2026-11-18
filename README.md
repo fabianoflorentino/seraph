@@ -7,6 +7,8 @@
 
 **English** | [Português](README.pt-br.md)
 
+**Demo:** https://seraph.fabianoflorentino.dev/
+
 seraph is an independent, ad-free status board for the services you actually
 depend on: banks, payment networks, carriers, clouds, messaging apps, and more.
 It reads **official status pages and feeds**, then publishes a
@@ -26,9 +28,12 @@ care about. seraph inverts that:
   aggregators.
 - **Real freshness** — a reliable five-minute cron publishes a snapshot every
   5–20 minutes.
-- **At a glance** — overview cards, an attention filter, collapsible
+- **At a glance** — overview cards, attention/operational filters, collapsible
   categories, and a 24-hour availability ranking once history builds up.
-- **Yours** — unlimited favorites per region, stored only in `localStorage`.
+- **Installable** — PWA shell with an offline fallback; notifications come
+  later.
+- **Yours** — unlimited favorites per region, stored only in `localStorage`,
+  with JSON export/import and a shareable link for backup.
 - **Boring and cheap** — GitHub Pages + one Cloudflare Worker. Zero monthly cost,
   no infrastructure to patch.
 
@@ -41,6 +46,16 @@ dashboard can show a 24-hour availability ranking. The initial catalog has 24
 services across cloud, AI, social, streaming, gaming, ecommerce, payments, and
 messaging, including AWS and Google Cloud. `probe` sources still render as
 `unknown` with an error note until that collector lands.
+
+## Privacy and data retention
+
+Favorites are the only user data. They stay in the browser under
+`seraph.favorites.v1`; there is no account, analytics, tracking, or server-side
+copy. Export produces a JSON backup, and “Copy link” creates a URL containing
+only the public service slugs. Clearing site data, using private mode, or
+changing browser/device removes the local copy — import the backup or open the
+link to restore it. Account-based sync is intentionally left for a later,
+opt-in paid phase.
 
 ## How it works
 
@@ -208,7 +223,8 @@ lefthook install
 - **M3** — `probe` collector for official health endpoints.
 - **M4** — expand the catalog toward ~50 services, Brazil + global.
 - **History (done)** — 24-hour retention and availability ranking.
-- **Later** — installable PWA with notifications.
+- **PWA install (done)** — manifest, icons, service worker, and offline shell.
+- **Later** — PWA notifications and per-region latency comparisons.
 
 ## License
 

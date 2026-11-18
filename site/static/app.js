@@ -28,6 +28,7 @@
   const STATUS_RANK = { major: 0, degraded: 1, unknown: 2, operational: 3 };
   const AVAILABILITY_WINDOW_MS = 24 * 60 * 60 * 1000;
   const MIN_AVAILABILITY_POINTS = 3;
+  const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 
   const state = {
@@ -59,6 +60,12 @@
     groups: document.getElementById("groups"),
     empty: document.getElementById("empty"),
     backToTop: document.getElementById("back-to-top"),
+    favoritesTools: document.getElementById("favorites-tools"),
+    favoritesStatus: document.getElementById("favorites-status"),
+    favoritesExport: document.getElementById("favorites-export"),
+    favoritesImport: document.getElementById("favorites-import"),
+    favoritesLink: document.getElementById("favorites-link"),
+    favoritesFile: document.getElementById("favorites-file"),
   };
 
   function readStore(key) {
@@ -97,6 +104,160 @@
 
   function saveCollapsed() {
     writeStore(STORAGE.collapsed, JSON.stringify([...state.collapsed]));
+  }
+
+  function saveFavorites() {
+    writeStore(STORAGE.favorites, JSON.stringify([...state.favorites]));
+  }
+
+  function favoriteSlugs(payload) {
+    let items = [];
+
+    if (Array.isArray(payload)) {
+      items = payload;
+    } else if (payload && Array.isArray(payload.services)) {
+      items = payload.services;
+    } else if (payload && Array.isArray(payload.favorites)) {
+      items = payload.favorites;
+    }
+
+    const slugs = new Set();
+
+    for (const item of items) {
+      const slug = typeof item === "string" ? item : item?.slug;
+
+      if (typeof slug === "string" && SLUG_PATTERN.test(slug)) {
+        slugs.add(slug);
+      }
+    }
+
+    return [...slugs];
+  }
+
+  function setFavoritesStatus(key, vars) {
+    els.favoritesStatus.textContent = key ? t(key, vars) : "";
+  }
+
+  function renderFavoritesTools() {
+    const active = state.view === "favorites";
+    els.favoritesTools.hidden = !active;
+
+    if (!active) {
+      return;
+    }
+
+    const empty = state.favorites.size === 0;
+    els.favoritesExport.disabled = empty;
+    els.favoritesLink.disabled = empty;
+  }
+
+  function exportFavorites() {
+    if (state.favorites.size === 0) {
+      setFavoritesStatus("favoritesNoFavorites");
+
+      return;
+    }
+
+    const names = new Map((state.snapshot?.services || []).map((service) => [service.slug, service.name]));
+    const services = [...state.favorites].sort().map((slug) => ({
+      slug,
+      name: names.get(slug) || slug,
+    }));
+    const payload = {
+      version: 1,
+      exported_at: new Date().toISOString(),
+      services,
+    };
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `seraph-favorites-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    setFavoritesStatus("favoritesExported", { count: services.length });
+  }
+
+  async function importFavoritesFile(file) {
+    try {
+      const payload = JSON.parse(await file.text());
+      const slugs = favoriteSlugs(payload);
+
+      if (slugs.length === 0) {
+        setFavoritesStatus("favoritesImportEmpty");
+
+        return;
+      }
+
+      const before = state.favorites.size;
+      for (const slug of slugs) {
+        state.favorites.add(slug);
+      }
+
+      saveFavorites();
+      render();
+
+      const added = state.favorites.size - before;
+      setFavoritesStatus(
+        added === 0 ? "favoritesImportedNone" : "favoritesImported",
+        { count: added },
+      );
+    } catch {
+      setFavoritesStatus("favoritesImportInvalid");
+    }
+  }
+
+  async function copyFavoritesLink() {
+    if (state.favorites.size === 0) {
+      setFavoritesStatus("favoritesNoFavorites");
+
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.hash = "";
+    url.searchParams.set("services", [...state.favorites].sort().join(","));
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("clipboard unavailable");
+      }
+
+      await navigator.clipboard.writeText(url.toString());
+      setFavoritesStatus("favoritesLinkCopied");
+    } catch {
+      window.prompt(t("favoritesLinkPrompt"), url.toString());
+      setFavoritesStatus("favoritesLinkFailed");
+    }
+  }
+
+  function applySharedFavorites() {
+    const url = new URL(window.location.href);
+    const raw = url.searchParams.get("services");
+
+    if (!raw) {
+      return;
+    }
+
+    const slugs = raw.split(",").map((slug) => slug.trim()).filter((slug) => SLUG_PATTERN.test(slug));
+    url.searchParams.delete("services");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+
+    if (slugs.length === 0) {
+      return;
+    }
+
+    for (const slug of slugs) {
+      state.favorites.add(slug);
+    }
+
+    saveFavorites();
+    state.view = "favorites";
+    writeStore(STORAGE.view, state.view);
+    setFavoritesStatus("favoritesImportedLink", { count: slugs.length });
   }
 
   function t(key, vars) {
@@ -222,6 +383,18 @@
     });
   }
 
+  function matchesStatus(service, filter) {
+    if (filter === "attention") {
+      return service.status !== "operational";
+    }
+
+    if (filter === "operational") {
+      return service.status === "operational";
+    }
+
+    return true;
+  }
+
   function matchesFilters(service) {
     if (!(service.regions || []).includes(state.region)) {
       return false;
@@ -231,7 +404,7 @@
       return false;
     }
 
-    if (state.statusFilter === "attention" && service.status === "operational") {
+    if (!matchesStatus(service, state.statusFilter)) {
       return false;
     }
 
@@ -451,10 +624,8 @@
       body.append(inner);
 
       head.addEventListener("click", () => {
-        const isCollapsed = section.classList.toggle("collapsed");
-        head.setAttribute("aria-expanded", String(!isCollapsed));
-        head.setAttribute("aria-label", categoryAriaLabel(label, items.length, isCollapsed, attentionCount));
-        body.setAttribute("aria-hidden", String(isCollapsed));
+        const isCollapsed = !section.classList.contains("collapsed");
+        setGroupCollapsed(section, isCollapsed);
 
         if (isCollapsed) {
           state.collapsed.add(category);
@@ -472,6 +643,22 @@
 
     updateSummary(services.length);
     renderOverview();
+  }
+
+  function setGroupCollapsed(section, collapsed) {
+    const head = section.querySelector(".group-head");
+    const body = section.querySelector(".group-body");
+    const title = section.querySelector(".group-title");
+    const count = section.querySelector(".count");
+    const alert = section.querySelector(".group-alert");
+    const label = title?.textContent || section.dataset.category || "";
+    const total = Number(count?.textContent || 0);
+    const attention = Number(alert?.textContent || 0);
+
+    section.classList.toggle("collapsed", collapsed);
+    head?.setAttribute("aria-expanded", String(!collapsed));
+    head?.setAttribute("aria-label", categoryAriaLabel(label, total, collapsed, attention));
+    body?.setAttribute("aria-hidden", String(collapsed));
   }
 
   function categoryAriaLabel(label, count, collapsed, attention) {
@@ -527,7 +714,9 @@
     const attention = total - operational;
     const categories = new Set(services.map((service) => service.category || "other")).size;
     const percent = total > 0 ? Math.round((operational / total) * 100) : 0;
-    const filtering = state.statusFilter === "attention";
+    const filtering = state.statusFilter !== "";
+    const attentionFiltering = state.statusFilter === "attention";
+    const operationalFiltering = state.statusFilter === "operational";
 
     const allCollapsed = state.visibleCategories.length > 0
       && state.visibleCategories.every((category) => state.collapsed.has(category));
@@ -537,10 +726,17 @@
 
     const attentionMeta = total === 0
       ? t("overviewNoServices")
-      : attention === 0
-        ? t("overviewAllGood")
-        : filtering
-          ? t("overviewClearFilter")
+      : attentionFiltering
+        ? t("overviewClearFilter")
+        : attention === 0
+          ? t("overviewAllGood")
+          : t("overviewFilter");
+    const operationalMeta = total === 0
+      ? t("overviewNoServices")
+      : operationalFiltering
+        ? t("overviewClearFilter")
+        : operational === 0
+          ? t("overviewNoneOperational")
           : t("overviewFilter");
 
     els.overview.replaceChildren(
@@ -551,14 +747,21 @@
         "",
         filtering ? clearStatusFilter : null,
       ),
-      overviewCard(t("overviewOperational"), String(operational), t("overviewPercent", { percent })),
+      overviewCard(
+        t("overviewOperational"),
+        String(operational),
+        operationalMeta,
+        "ok",
+        operational > 0 || operationalFiltering ? toggleOperationalFilter : null,
+        operationalFiltering,
+      ),
       overviewCard(
         t("overviewAttention"),
         String(attention),
         attentionMeta,
         attention > 0 ? "attention" : "ok",
-        attention > 0 || filtering ? toggleAttentionFilter : null,
-        filtering,
+        attention > 0 || attentionFiltering ? toggleAttentionFilter : null,
+        attentionFiltering,
       ),
       overviewCard(
         t("overviewCategories"),
@@ -571,12 +774,20 @@
   }
 
   function toggleAttentionFilter() {
-    state.statusFilter = state.statusFilter === "attention" ? "" : "attention";
+    toggleStatusFilter("attention");
+  }
 
-    if (state.statusFilter === "attention") {
+  function toggleOperationalFilter() {
+    toggleStatusFilter("operational");
+  }
+
+  function toggleStatusFilter(filter) {
+    state.statusFilter = state.statusFilter === filter ? "" : filter;
+
+    if (state.statusFilter) {
       const categories = new Set(
         scopedServices()
-          .filter((service) => service.status !== "operational")
+          .filter((service) => matchesStatus(service, state.statusFilter))
           .map((service) => service.category || "other"),
       );
 
@@ -587,7 +798,7 @@
       saveCollapsed();
     }
 
-    render();
+    renderWithTransition();
   }
 
   function clearStatusFilter() {
@@ -596,7 +807,16 @@
     }
 
     state.statusFilter = "";
-    render();
+    renderWithTransition();
+  }
+
+  function renderWithTransition() {
+    if (prefersReducedMotion || typeof document.startViewTransition !== "function") {
+      render();
+      return;
+    }
+
+    document.startViewTransition(render);
   }
 
   function renderAvailability() {
@@ -695,17 +915,26 @@
     const allCollapsed = state.visibleCategories.every(
       (category) => state.collapsed.has(category),
     );
+    const nextCollapsed = !allCollapsed;
+    const sections = new Map(
+      [...els.groups.querySelectorAll(".group")].map((section) => [section.dataset.category, section]),
+    );
 
     for (const category of state.visibleCategories) {
-      if (allCollapsed) {
-        state.collapsed.delete(category);
-      } else {
+      if (nextCollapsed) {
         state.collapsed.add(category);
+      } else {
+        state.collapsed.delete(category);
+      }
+
+      const section = sections.get(category);
+      if (section) {
+        setGroupCollapsed(section, nextCollapsed);
       }
     }
 
     saveCollapsed();
-    renderGroups();
+    renderOverview();
   }
 
   function updateSummary(shown) {
@@ -729,6 +958,8 @@
     if (shown === 0) {
       if (state.statusFilter === "attention") {
         els.empty.textContent = t("emptyAttention");
+      } else if (state.statusFilter === "operational") {
+        els.empty.textContent = t("emptyOperational");
       } else {
         els.empty.textContent = state.view === "favorites" && state.snapshot
           ? t("emptyFavorites")
@@ -741,6 +972,7 @@
     renderRegions();
     renderGroups();
     renderAvailability();
+    renderFavoritesTools();
 
     els.updated.textContent = formatTime(state.snapshot?.generated_at);
     els.updated.dateTime = state.snapshot?.generated_at || "";
@@ -783,7 +1015,7 @@
       state.favorites.add(slug);
     }
 
-    writeStore(STORAGE.favorites, JSON.stringify([...state.favorites]));
+    saveFavorites();
 
     const star = document.querySelector(`.star[data-slug="${CSS.escape(slug)}"]`);
     if (star) {
@@ -792,6 +1024,8 @@
       star.setAttribute("aria-label", t(favorite ? "removeFavorite" : "addFavorite", { name }));
       star.textContent = favorite ? "★" : "☆";
     }
+
+    renderFavoritesTools();
 
     if (state.view === "favorites") {
       renderGroups();
@@ -818,6 +1052,20 @@
     els.retry.addEventListener("click", () => {
       refresh();
     });
+
+    els.favoritesExport.addEventListener("click", exportFavorites);
+    els.favoritesImport.addEventListener("click", () => {
+      els.favoritesFile.click();
+    });
+    els.favoritesFile.addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+
+      if (file) {
+        await importFavoritesFile(file);
+      }
+    });
+    els.favoritesLink.addEventListener("click", copyFavoritesLink);
 
     const updateBackToTop = () => {
       const visible = window.scrollY > 480;
@@ -874,6 +1122,7 @@
 
     bind();
     applyStaticTranslations();
+    applySharedFavorites();
     render();
     refresh();
 
@@ -888,5 +1137,25 @@
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
+  }
+
+  if ("serviceWorker" in navigator) {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let refreshing = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController || refreshing) {
+        return;
+      }
+
+      refreshing = true;
+      window.location.reload();
+    });
+
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {
+        // PWA support is optional; the dashboard still works without it.
+      });
+    });
   }
 })();

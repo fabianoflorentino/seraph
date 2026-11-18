@@ -26,10 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GitHub now links to its status page.
 - Collapsible category sections with persisted state, attention badges, and an
   overview with service/status/category counts.
-- The Attention overview card filters non-operational services; the Services
-  card clears the filter and Categories toggles collapse state.
+- The Attention and Operational overview cards filter services; the Services
+  card clears the filter and Categories toggles collapse state. Filter changes
+  use a reduced-motion-aware view transition.
 - History retention across runs (up to 288 points per service) and a 24-hour
   availability ranking on the dashboard.
+- Installable PWA shell with manifest, icons, service worker, and offline
+  fallback for assets and the latest snapshot.
+- Local-only favorite backup/share controls: JSON export/import and a link
+  containing only public service slugs, plus an explicit privacy notice.
 - `seraph catalog add` and `make catalog-add` for validated YAML catalog edits.
 - Category and region tags on service cards; the region filter only appears
   when more than one region is available.

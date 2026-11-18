@@ -103,7 +103,10 @@ except `slug`, `name`, `category`, `regions`, and `status`.
 
 Favorites are deliberately **not** in the snapshot. They live in
 `localStorage` under `seraph.*.v1` keys, so the published artifact stays
-anonymous and cacheable.
+anonymous and cacheable. This is the privacy boundary: there is no account,
+server copy, or analytics. Users can export a versioned JSON backup or copy a
+link that contains only service slugs; clearing browser data or changing devices
+requires one of those to restore. Account sync remains a later opt-in feature.
 
 ## Reliability choices
 
@@ -120,6 +123,6 @@ anonymous and cacheable.
 ## Roadmap
 
 1. `internal/collector`: probe implementation for official health endpoints.
-2. PWA install with local notifications for favorites.
+2. PWA notifications for favorites (installability is implemented).
 3. Per-region latency comparisons (multiple probe locations).
 4. Expand the verified catalog and region coverage.

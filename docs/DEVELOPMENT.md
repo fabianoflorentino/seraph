@@ -65,7 +65,9 @@ The Makefile passes your `UID`/`GID` to both containers, so files created in
 | `site/static/data/state.json`   | Generated snapshot, ignored by git.           |
 
 HTML, CSS, and JS changes reload the browser automatically. Keep English and
-Portuguese strings in sync when adding UI text.
+Portuguese strings in sync when adding UI text. When changing files listed in
+the service worker shell, bump `CACHE` in `site/static/sw.js` so installed
+clients replace their old shell.
 
 ## Editing the collector
 

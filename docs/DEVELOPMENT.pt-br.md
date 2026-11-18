@@ -65,7 +65,9 @@ O Makefile passa seu `UID`/`GID` para os containers, então arquivos criados em
 | `site/static/data/state.json`   | Snapshot gerado, ignorado pelo git.            |
 
 Mudanças de HTML, CSS e JS recarregam o navegador automaticamente. Mantenha as
-strings em inglês e português em sincronia ao adicionar texto de interface.
+strings em inglês e português em sincronia ao adicionar texto de interface. Ao
+alterar arquivos listados no shell do service worker, incremente `CACHE` em
+`site/static/sw.js` para clientes instalados substituírem o shell antigo.
 
 ## Editando o coletor
 
