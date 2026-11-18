@@ -16,5 +16,6 @@ cloudflare/node_modules/
 cloudflare/.wrangler/
 
 # Local environment
+.preview/
 .env
 .DS_Store
