@@ -67,6 +67,44 @@ docker compose run --rm --no-deps site hugo --minify --gc
 python3 -m http.server -d site/public 8000
 ```
 
+## Contêiner e implantação interna
+
+A imagem de produção é definida pelo `Dockerfile` da raiz:
+
+- O Hugo compila `site/` com `HUGO_BASEURL` (padrão
+  `https://seraph.srectl.fabianoflorentino.dev/`).
+- O Go compila um binário estático `seraph` para a plataforma alvo.
+- O runtime é `nginx-unprivileged` na porta `8080`; `docker/entrypoint.sh`
+  valida o catálogo, inicia o loop do coletor e serve o site.
+- O coletor grava em `SERAPH_OUT_DIR` (padrão
+  `/usr/share/nginx/html/data`). Monte um volume nesse caminho para manter o
+  histórico entre reinícios.
+
+```bash
+make docker-build
+make docker-run                 # http://localhost:8080
+make docker-push IMAGE_TAG=v0.1.0
+```
+
+| Variável | Padrão na imagem | Função |
+| --- | --- | --- |
+| `SERAPH_OUT_DIR` | `/usr/share/nginx/html/data` | Diretório do snapshot. |
+| `SERAPH_BASE_URL` | URL interna de `state.json` | URL pública opcional. |
+| `SERAPH_SYNC_INTERVAL` | `300` | Segundos entre coletas. |
+
+Endpoints: `/healthz` para o processo e `/data/state.json` para prontidão dos
+dados. O site é servido em `/`.
+
+### Workflows de imagem e release
+
+- `.github/workflows/image.yml` publica `edge` em `main` e tags semver em
+  `v*`; requer o ambiente `DOCKERHUB` com `DOCKERHUB_USERNAME` e
+  `DOCKERHUB_TOKEN` (Read & Write). Sem eles, apenas avisa e ignora.
+- `.github/workflows/release.yml` gera arquivos Linux amd64/arm64, checksums e
+  a release do GitHub para cada tag `v*`.
+- O app GitOps do srectl observa `deploy/projects/seraph`; atualize a tag da
+  imagem para promover uma release.
+
 ## Configuração
 
 `config/seraph.yml` é opcional; os padrões embutidos valem quando ele não

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Production container image: multi-stage Hugo + Go build, unprivileged nginx
+  runtime, in-container collector loop, `/healthz`, and Docker/Make targets.
+- Docker Hub image workflow for `edge` and `v*` tags, plus a tag-driven GitHub
+  release workflow with Linux amd64/arm64 archives and checksums.
 - Go module, Cobra CLI, and `version`, `sync`, and `validate` commands.
 - YAML catalog schema with pack loading, validation, and duplicate detection.
 - Snapshot schema with atomic writes and schema versioning.

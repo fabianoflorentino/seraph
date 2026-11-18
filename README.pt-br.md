@@ -210,6 +210,30 @@ validação e o checklist para adicionar um serviço estão em
 Passo a passo, monitoramento e solução de problemas:
 [docs/OPERATIONS.pt-br.md](docs/OPERATIONS.pt-br.md).
 
+### Imagem de contêiner
+
+O `Dockerfile` compila o site com Hugo, embute o binário `seraph` e serve tudo
+com nginx sem privilégios na porta `8080`. O loop do coletor roda no mesmo
+contêiner e grava em `/usr/share/nginx/html/data`.
+
+```bash
+make docker-build                 # fabianoflorentino/seraph:dev
+make docker-run                   # http://localhost:8080
+docker run --rm -p 8080:8080 \
+  -v seraph-data:/usr/share/nginx/html/data \
+  fabianoflorentino/seraph:dev
+```
+
+O `image.yml` publica `edge` a partir de `main` e tags semver de tags `v*` no
+Docker Hub; o `release.yml` cria a release no GitHub com binários Linux.
+Configure os segredos do ambiente `DOCKERHUB`: `DOCKERHUB_USERNAME` e
+`DOCKERHUB_TOKEN` (Read & Write). Sem eles o job avisa e ignora a publicação.
+
+A implantação interna fica na árvore GitOps do
+[srectl](https://github.com/fabianoflorentino/srectl) em
+`deploy/projects/seraph`, exposta como `seraph.localhost` (e opcionalmente
+`seraph.srectl.fabianoflorentino.dev`).
+
 ## Desenvolvimento
 
 ```bash

@@ -15,8 +15,8 @@ It reads **official status pages and feeds**, then publishes a
 static JSON snapshot that a lightweight dashboard renders in English and
 Brazilian Portuguese.
 
-No account, no server, no database. Favorites are unlimited and live in your
-browser.
+No account, no database. Favorites are unlimited and live in your browser.
+The same build ships as a public static site or as a self-contained container.
 
 ## Why another status board?
 
@@ -208,6 +208,31 @@ service-adding checklist are in [docs/CATALOG.md](docs/CATALOG.md).
 
 Step-by-step instructions, monitoring, and troubleshooting:
 [docs/OPERATIONS.md](docs/OPERATIONS.md).
+
+### Container image
+
+`Dockerfile` builds the site with Hugo, embeds the `seraph` binary, and serves
+everything from an unprivileged nginx on port `8080`. The collector loop runs
+inside the same container and writes to `/usr/share/nginx/html/data`.
+
+```bash
+make docker-build                 # fabianoflorentino/seraph:dev
+make docker-run                   # http://localhost:8080
+docker run --rm -p 8080:8080 \
+  -v seraph-data:/usr/share/nginx/html/data \
+  fabianoflorentino/seraph:dev
+```
+
+`image.yml` publishes `edge` from `main` and semver tags from `v*` tags to
+Docker Hub; `release.yml` creates the GitHub release with Linux binaries.
+Configure the `DOCKERHUB` environment secrets `DOCKERHUB_USERNAME` and
+`DOCKERHUB_TOKEN` (Read & Write). If they are absent the image job warns and
+skips publishing instead of failing CI.
+
+The internal deployment lives in the
+[srectl](https://github.com/fabianoflorentino/srectl) GitOps tree at
+`deploy/projects/seraph`, exposed as `seraph.localhost` (and optionally
+`seraph.srectl.fabianoflorentino.dev`).
 
 ## Development
 

@@ -24,6 +24,9 @@ PREVIEW_PORT?=8000
 PREVIEW_DIR?=.preview
 PREVIEW_LOG?=$(PREVIEW_DIR)/server.log
 PREVIEW_PID?=$(PREVIEW_DIR)/server.pid
+IMAGE?=fabianoflorentino/seraph
+IMAGE_TAG?=dev
+HUGO_BASEURL?=https://seraph.srectl.fabianoflorentino.dev/
 DEV_ENV=env UID=$(shell id -u) GID=$(shell id -g) SITE_PORT=$(SITE_PORT) SERAPH_DEV_INTERVAL=$(DEV_INTERVAL)
 HUGO_IMAGE=hugomods/hugo:0.158.0
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
@@ -33,7 +36,7 @@ LDFLAGS=-ldflags "-X github.com/fabianoflorentino/seraph/internal/version.Versio
 
 .PHONY: all build clean test coverage lint lint-fix fmt vet run sync validate catalog-add \
 	catalog-inspect catalog-audit site-build \
-	preview preview/logs preview/status preview/stop check \
+	preview preview/logs preview/status preview/stop check docker-build docker-run docker-push \
 	dev/up dev/down dev/logs dev/ps dev/shell dev/collect dev/rebuild dev/reset help
 
 .DEFAULT_GOAL := help
@@ -160,6 +163,20 @@ dev/rebuild:
 dev/reset:
 	$(DEV_ENV) $(DOCKER_COMPOSE) down --remove-orphans
 	rm -f site/static/data/state.json
+
+# ---- Container ------------------------------------------------------------
+
+## docker-build: Build the production image
+docker-build:
+	docker build --build-arg HUGO_BASEURL="$(HUGO_BASEURL)" -t "$(IMAGE):$(IMAGE_TAG)" .
+
+## docker-run: Run the production image on http://localhost:8080
+docker-run: docker-build
+	docker run --rm -p 8080:8080 -v seraph-data:/usr/share/nginx/html/data "$(IMAGE):$(IMAGE_TAG)"
+
+## docker-push: Push the configured image tag to Docker Hub
+docker-push: docker-build
+	docker push "$(IMAGE):$(IMAGE_TAG)"
 
 # ---- Static site ----------------------------------------------------------
 
