@@ -26,6 +26,9 @@
     "gov",
   ];
   const STATUS_RANK = { major: 0, degraded: 1, unknown: 2, operational: 3 };
+  const AVAILABILITY_WINDOW_MS = 24 * 60 * 60 * 1000;
+  const MIN_AVAILABILITY_POINTS = 3;
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 
   const state = {
     lang: "en",
@@ -47,12 +50,15 @@
     segmented: document.querySelector(".segmented"),
     summary: document.getElementById("summary"),
     overview: document.getElementById("overview"),
+    availability: document.getElementById("availability"),
+    availabilityList: document.getElementById("availability-list"),
     updated: document.getElementById("updated"),
     banner: document.getElementById("banner"),
     bannerText: document.getElementById("banner-text"),
     retry: document.getElementById("retry"),
     groups: document.getElementById("groups"),
     empty: document.getElementById("empty"),
+    backToTop: document.getElementById("back-to-top"),
   };
 
   function readStore(key) {
@@ -593,6 +599,94 @@
     render();
   }
 
+  function renderAvailability() {
+    const generated = Date.parse(state.snapshot?.generated_at || "");
+    const now = Number.isNaN(generated) ? Date.now() : generated;
+    const cutoff = now - AVAILABILITY_WINDOW_MS;
+
+    const ranked = scopedServices()
+      .map((service) => {
+        const points = (service.points || []).filter((point) => {
+          const at = Date.parse(point.at);
+          return !Number.isNaN(at) && at >= cutoff && at <= now + 60_000;
+        });
+
+        if (points.length < MIN_AVAILABILITY_POINTS) {
+          return null;
+        }
+
+        const operational = points.filter((point) => point.status === "operational").length;
+
+        return {
+          service,
+          points: points.length,
+          pointsData: points,
+          availability: (operational / points.length) * 100,
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) => (
+        right.availability - left.availability
+        || right.points - left.points
+        || left.service.name.localeCompare(right.service.name)
+      ))
+      .slice(0, 3);
+
+    if (ranked.length === 0) {
+      els.availability.hidden = true;
+      els.availabilityList.replaceChildren();
+
+      return;
+    }
+
+    els.availability.hidden = false;
+    els.availabilityList.replaceChildren(...ranked.map((item, index) => availabilityRow(item, index)));
+  }
+
+  function availabilityRow(item, index) {
+    const row = document.createElement("li");
+    row.className = "availability-item";
+
+    const rank = document.createElement("span");
+    rank.className = "availability-rank";
+    rank.textContent = String(index + 1);
+
+    const info = document.createElement("span");
+    info.className = "availability-info";
+
+    const name = document.createElement("strong");
+    name.className = "availability-name";
+    name.textContent = item.service.name;
+
+    const meta = document.createElement("span");
+    meta.className = "availability-meta";
+    meta.textContent = t("availabilitySamples", { count: item.points });
+
+    info.append(name, meta);
+
+    const history = document.createElement("div");
+    history.className = "history availability-history";
+    history.setAttribute("aria-hidden", "true");
+
+    for (const point of item.pointsData.slice(-30)) {
+      const cell = document.createElement("span");
+      cell.dataset.status = point.status || "unknown";
+      history.append(cell);
+    }
+
+    const availability = Math.max(0, Math.min(100, item.availability));
+
+    const value = document.createElement("strong");
+    value.className = "availability-value";
+    value.textContent = availability >= 100
+      ? "100%"
+      : `${availability.toFixed(1)}%`;
+
+    row.append(rank, info, history, value);
+
+    return row;
+  }
+
   function toggleAllCategories() {
     if (state.visibleCategories.length === 0) {
       return;
@@ -646,6 +740,7 @@
   function render() {
     renderRegions();
     renderGroups();
+    renderAvailability();
 
     els.updated.textContent = formatTime(state.snapshot?.generated_at);
     els.updated.dateTime = state.snapshot?.generated_at || "";
@@ -723,6 +818,18 @@
     els.retry.addEventListener("click", () => {
       refresh();
     });
+
+    const updateBackToTop = () => {
+      const visible = window.scrollY > 480;
+      els.backToTop.classList.toggle("show", visible);
+      els.backToTop.tabIndex = visible ? 0 : -1;
+    };
+
+    window.addEventListener("scroll", updateBackToTop, { passive: true });
+    els.backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
+    });
+    updateBackToTop();
 
     els.regions.addEventListener("click", (event) => {
       const button = event.target.closest("button[data-region]");

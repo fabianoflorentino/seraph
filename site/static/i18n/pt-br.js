@@ -2,6 +2,7 @@ window.SERAPH_I18N = window.SERAPH_I18N || {};
 
 window.SERAPH_I18N["pt-br"] = {
   skip: "Ir para o conteúdo",
+  backToTop: "Voltar ao topo",
   tagline: "protege o que mais importa",
   search: "Buscar serviços",
   searchPlaceholder: "Buscar pelo nome…",
@@ -10,6 +11,9 @@ window.SERAPH_I18N["pt-br"] = {
   favorites: "Favoritos",
   regions: "Região",
   updated: "Atualizado",
+  availabilityTitle: "Mais disponíveis (24h)",
+  availabilityWindow: "Últimas 24h",
+  availabilitySamples: "{count} verificações",
   overview: "Visão geral",
   overviewServices: "Serviços",
   overviewOperational: "Operacionais",

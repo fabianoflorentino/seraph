@@ -56,6 +56,14 @@
 
     <section id="overview" class="overview" aria-label="Overview" data-i18n-aria="overview"></section>
 
+    <section id="availability" class="availability" aria-labelledby="availability-title" hidden>
+      <div class="availability-head">
+        <h2 id="availability-title" data-i18n="availabilityTitle">Most available (24h)</h2>
+        <span data-i18n="availabilityWindow">Last 24h</span>
+      </div>
+      <ol id="availability-list" class="availability-list"></ol>
+    </section>
+
     <div id="banner" class="banner" role="alert" hidden>
       <span id="banner-text" data-i18n="error">Could not load the latest snapshot.</span>
       <button id="retry" class="ghost" type="button" data-i18n="retry">Retry</button>
@@ -66,9 +74,15 @@
   </main>
 
   <footer>
-    <p data-i18n="footer">Unofficial and independent. Status data comes from official status pages and direct probes.</p>
+    <p data-i18n="footer">Unofficial and independent. Status data comes from official status sources.</p>
     <p><a href="https://github.com/fabianoflorentino/seraph" rel="noopener">GitHub</a> · MIT</p>
   </footer>
+
+  <button id="back-to-top" class="back-to-top" type="button" data-i18n-aria="backToTop" aria-label="Back to top" tabindex="-1">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 19V6M6 12l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
   <script src="i18n/en.js" defer></script>
   <script src="i18n/pt-br.js" defer></script>
