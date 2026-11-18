@@ -4,8 +4,243 @@ services:
     name: GitHub
     category: cloud
     official_url: https://github.com
+    status_url: https://www.githubstatus.com
     regions:
       global: primary
     source:
       type: statuspage
       url: https://www.githubstatus.com/api/v2/summary.json
+  - slug: cloudflare
+    name: Cloudflare
+    category: cloud
+    official_url: https://www.cloudflare.com
+    status_url: https://www.cloudflarestatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.cloudflarestatus.com/api/v2/summary.json
+  - slug: openai
+    name: OpenAI
+    category: ai
+    official_url: https://openai.com
+    status_url: https://status.openai.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.openai.com/api/v2/summary.json
+  - slug: anthropic
+    name: Anthropic
+    category: ai
+    official_url: https://www.anthropic.com
+    status_url: https://status.claude.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.anthropic.com/api/v2/summary.json
+  - slug: discord
+    name: Discord
+    category: social
+    official_url: https://discord.com
+    status_url: https://discordstatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://discordstatus.com/api/v2/summary.json
+  - slug: reddit
+    name: Reddit
+    category: social
+    official_url: https://www.reddit.com
+    status_url: https://www.redditstatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.redditstatus.com/api/v2/summary.json
+  - slug: twitch
+    name: Twitch
+    category: streaming
+    official_url: https://www.twitch.tv
+    status_url: https://status.twitch.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.twitch.com/api/v2/summary.json
+  - slug: epic-games
+    name: Epic Games
+    category: gaming
+    official_url: https://www.epicgames.com
+    status_url: https://status.epicgames.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.epicgames.com/api/v2/summary.json
+  - slug: shopify
+    name: Shopify
+    category: ecommerce
+    official_url: https://www.shopify.com
+    status_url: https://www.shopifystatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.shopifystatus.com/api/v2/summary.json
+  - slug: mercado-pago
+    name: Mercado Pago
+    category: payments
+    official_url: https://www.mercadopago.com.br
+    status_url: https://status.mercadopago.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.mercadopago.com/api/v2/summary.json
+  - slug: vtex
+    name: VTEX
+    category: ecommerce
+    official_url: https://vtex.com
+    status_url: https://status.vtex.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.vtex.com/api/v2/summary.json
+  - slug: vercel
+    name: Vercel
+    category: cloud
+    official_url: https://vercel.com
+    status_url: https://www.vercel-status.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.vercel-status.com/api/v2/summary.json
+  - slug: netlify
+    name: Netlify
+    category: cloud
+    official_url: https://www.netlify.com
+    status_url: https://www.netlifystatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.netlifystatus.com/api/v2/summary.json
+  - slug: npm
+    name: npm
+    category: cloud
+    official_url: https://www.npmjs.com
+    status_url: https://status.npmjs.org
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.npmjs.org/api/v2/summary.json
+  - slug: sentry
+    name: Sentry
+    category: cloud
+    official_url: https://sentry.io
+    status_url: https://status.sentry.io
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.sentry.io/api/v2/summary.json
+  - slug: supabase
+    name: Supabase
+    category: cloud
+    official_url: https://supabase.com
+    status_url: https://status.supabase.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.supabase.com/api/v2/summary.json
+  - slug: docker
+    name: Docker
+    category: cloud
+    official_url: https://www.docker.com
+    status_url: https://www.dockerstatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.dockerstatus.com/api/v2/summary.json
+  - slug: notion
+    name: Notion
+    category: cloud
+    official_url: https://www.notion.so
+    status_url: https://www.notion-status.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.notion-status.com/api/v2/summary.json
+  - slug: gitlab
+    name: GitLab
+    category: cloud
+    official_url: https://gitlab.com
+    status_url: https://status.gitlab.com
+    regions:
+      global: primary
+    source:
+      type: statusio
+      url: https://status.gitlab.com/1.0/status/5b36dc6502d06804c08349f7
+  - slug: slack
+    name: Slack
+    category: messaging
+    official_url: https://slack.com
+    status_url: https://status.slack.com
+    regions:
+      global: primary
+    source:
+      type: json
+      format: slack
+      url: https://status.slack.com/api/v2.0.0/current
+  - slug: stripe
+    name: Stripe
+    category: payments
+    official_url: https://stripe.com
+    status_url: https://status.stripe.com
+    regions:
+      global: primary
+    source:
+      type: json
+      format: stripe
+      url: https://status.stripe.com/current
+  - slug: azure
+    name: Azure
+    category: cloud
+    official_url: https://azure.microsoft.com
+    status_url: https://azure.status.microsoft
+    regions:
+      global: primary
+    source:
+      type: rss
+      url: https://azure.status.microsoft/en-us/status/feed/
+  - slug: aws
+    name: AWS
+    category: cloud
+    official_url: https://aws.amazon.com
+    status_url: https://status.aws.amazon.com
+    regions:
+      global: primary
+    source:
+      type: json
+      url: https://status.aws.amazon.com/data.json
+      format: aws
+  - slug: google-cloud
+    name: Google Cloud
+    category: cloud
+    official_url: https://cloud.google.com
+    status_url: https://status.cloud.google.com
+    regions:
+      global: primary
+    source:
+      type: json
+      url: https://status.cloud.google.com/incidents.json
+      format: gcp
