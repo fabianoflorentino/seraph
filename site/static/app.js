@@ -8,6 +8,8 @@
     lang: "seraph.lang.v1",
     region: "seraph.region.v1",
     favorites: "seraph.favorites.v1",
+    collections: "seraph.collections.v1",
+    activeCollection: "seraph.collection.v1",
     view: "seraph.view.v1",
     collapsed: "seraph.collapsed.v1",
   };
@@ -37,6 +39,8 @@
     view: "all",
     query: "",
     favorites: new Set(),
+    collections: [],
+    activeCollection: "",
     collapsed: new Set(),
     statusFilter: "",
     visibleCategories: [],
@@ -66,6 +70,10 @@
     favoritesImport: document.getElementById("favorites-import"),
     favoritesLink: document.getElementById("favorites-link"),
     favoritesFile: document.getElementById("favorites-file"),
+    collectionSelect: document.getElementById("collection-select"),
+    collectionNew: document.getElementById("collection-new"),
+    collectionRename: document.getElementById("collection-rename"),
+    collectionDelete: document.getElementById("collection-delete"),
   };
 
   function readStore(key) {
@@ -84,13 +92,76 @@
     }
   }
 
-  function loadFavorites() {
+  function collectionServices(items) {
+    const slugs = new Set();
+
+    for (const item of Array.isArray(items) ? items : []) {
+      if (typeof item === "string" && SLUG_PATTERN.test(item)) {
+        slugs.add(item);
+      }
+    }
+
+    return [...slugs];
+  }
+
+  function normalizeCollection(entry, index) {
+    if (!entry || typeof entry !== "object") {
+      return null;
+    }
+
+    const id = typeof entry.id === "string" && entry.id.trim()
+      ? entry.id.trim()
+      : `collection-${index + 1}`;
+    const name = typeof entry.name === "string" && entry.name.trim()
+      ? entry.name.trim()
+      : t("collectionDefaultName");
+
+    return {
+      id,
+      name,
+      services: collectionServices(entry.services),
+    };
+  }
+
+  function loadCollections() {
+    try {
+      const raw = readStore(STORAGE.collections);
+
+      if (raw) {
+        const parsed = JSON.parse(raw);
+
+        if (Array.isArray(parsed)) {
+          const collections = parsed.map(normalizeCollection).filter(Boolean);
+
+          if (collections.length > 0) {
+            return collections;
+          }
+        }
+      }
+    } catch {
+      // Fall through to the legacy favorites migration.
+    }
+
+    let legacy = [];
+
     try {
       const parsed = JSON.parse(readStore(STORAGE.favorites) || "[]");
-      return new Set(Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []);
+      legacy = collectionServices(parsed);
     } catch {
-      return new Set();
+      // Start with an empty default collection.
     }
+
+    return [{ id: "default", name: t("favorites"), services: legacy }];
+  }
+
+  function activeCollection() {
+    return state.collections.find((collection) => collection.id === state.activeCollection)
+      || state.collections[0]
+      || null;
+  }
+
+  function saveCollections() {
+    writeStore(STORAGE.collections, JSON.stringify(state.collections));
   }
 
   function loadCollapsed() {
@@ -107,6 +178,13 @@
   }
 
   function saveFavorites() {
+    const active = activeCollection();
+
+    if (active) {
+      active.services = [...state.favorites].sort();
+    }
+
+    saveCollections();
     writeStore(STORAGE.favorites, JSON.stringify([...state.favorites]));
   }
 
@@ -149,6 +227,93 @@
     const empty = state.favorites.size === 0;
     els.favoritesExport.disabled = empty;
     els.favoritesLink.disabled = empty;
+
+    els.collectionSelect.replaceChildren(...state.collections.map((collection) => {
+      const option = document.createElement("option");
+      option.value = collection.id;
+      option.textContent = collection.name;
+
+      return option;
+    }));
+    els.collectionSelect.value = state.activeCollection;
+    els.collectionDelete.disabled = state.collections.length < 2;
+  }
+
+  function setActiveCollection(id) {
+    const collection = state.collections.find((item) => item.id === id);
+
+    if (!collection) {
+      return;
+    }
+
+    state.activeCollection = collection.id;
+    state.favorites = new Set(collection.services);
+    writeStore(STORAGE.activeCollection, state.activeCollection);
+    render();
+  }
+
+  function createCollection() {
+    const name = (window.prompt(t("collectionPromptNew"), t("collectionDefaultName")) || "").trim();
+
+    if (!name) {
+      return;
+    }
+
+    const id = crypto.randomUUID?.() || `collection-${Date.now()}`;
+
+    state.collections.push({ id, name, services: [] });
+    state.activeCollection = id;
+    state.favorites = new Set();
+    writeStore(STORAGE.activeCollection, state.activeCollection);
+    saveFavorites();
+    render();
+    setFavoritesStatus("collectionCreated", { name });
+  }
+
+  function renameCollection() {
+    const collection = activeCollection();
+
+    if (!collection) {
+      return;
+    }
+
+    const name = (window.prompt(t("collectionPromptRename"), collection.name) || "").trim();
+
+    if (!name || name === collection.name) {
+      return;
+    }
+
+    collection.name = name;
+    saveCollections();
+    render();
+    setFavoritesStatus("collectionRenamed", { name });
+  }
+
+  function deleteCollection() {
+    const collection = activeCollection();
+
+    if (!collection) {
+      return;
+    }
+
+    if (state.collections.length < 2) {
+      setFavoritesStatus("collectionLast");
+
+      return;
+    }
+
+    if (!window.confirm(t("collectionConfirmDelete", { name: collection.name }))) {
+      return;
+    }
+
+    const name = collection.name;
+    state.collections = state.collections.filter((item) => item.id !== collection.id);
+    state.activeCollection = state.collections[0].id;
+    state.favorites = new Set(state.collections[0].services);
+    writeStore(STORAGE.activeCollection, state.activeCollection);
+    saveFavorites();
+    render();
+    setFavoritesStatus("collectionDeleted", { name });
   }
 
   function exportFavorites() {
@@ -166,6 +331,7 @@
     const payload = {
       version: 1,
       exported_at: new Date().toISOString(),
+      collection: activeCollection()?.name || "",
       services,
     };
     const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "application/json" });
@@ -561,6 +727,13 @@
         return rank !== 0 ? rank : a.name.localeCompare(b.name);
       });
       const attentionCount = items.filter((service) => service.status !== "operational").length;
+      const attentionByStatus = { major: 0, degraded: 0, unknown: 0 };
+
+      for (const service of items) {
+        if (service.status in attentionByStatus) {
+          attentionByStatus[service.status]++;
+        }
+      }
 
       const label = categoryLabel(category);
       const collapsed = state.collapsed.has(category);
@@ -591,11 +764,20 @@
 
       head.append(title, count);
 
-      if (attentionCount > 0) {
+      for (const status of ["major", "degraded", "unknown"]) {
+        const count = attentionByStatus[status];
+
+        if (count === 0) {
+          continue;
+        }
+
         const alert = document.createElement("span");
-        alert.className = "group-alert";
-        alert.textContent = String(attentionCount);
-        alert.setAttribute("aria-label", t("attentionCount", { count: attentionCount }));
+        alert.className = `group-alert group-alert--${status}`;
+        alert.textContent = String(count);
+        alert.setAttribute("aria-label", t("attentionStatusCount", {
+          count,
+          status: statusLabel(status),
+        }));
         head.append(alert);
       }
 
@@ -650,10 +832,10 @@
     const body = section.querySelector(".group-body");
     const title = section.querySelector(".group-title");
     const count = section.querySelector(".count");
-    const alert = section.querySelector(".group-alert");
     const label = title?.textContent || section.dataset.category || "";
     const total = Number(count?.textContent || 0);
-    const attention = Number(alert?.textContent || 0);
+    const attention = [...section.querySelectorAll(".group-alert")]
+      .reduce((sum, alert) => sum + Number(alert.textContent || 0), 0);
 
     section.classList.toggle("collapsed", collapsed);
     head?.setAttribute("aria-expanded", String(!collapsed));
@@ -1066,6 +1248,12 @@
       }
     });
     els.favoritesLink.addEventListener("click", copyFavoritesLink);
+    els.collectionSelect.addEventListener("change", (event) => {
+      setActiveCollection(event.target.value);
+    });
+    els.collectionNew.addEventListener("click", createCollection);
+    els.collectionRename.addEventListener("click", renameCollection);
+    els.collectionDelete.addEventListener("click", deleteCollection);
 
     const updateBackToTop = () => {
       const visible = window.scrollY > 480;
@@ -1117,8 +1305,14 @@
     state.lang = detectLanguage();
     state.region = readStore(STORAGE.region) || "global";
     state.view = readStore(STORAGE.view) === "favorites" ? "favorites" : "all";
-    state.favorites = loadFavorites();
+    state.collections = loadCollections();
+    state.activeCollection = readStore(STORAGE.activeCollection) || state.collections[0].id;
+    if (!state.collections.some((collection) => collection.id === state.activeCollection)) {
+      state.activeCollection = state.collections[0].id;
+    }
+    state.favorites = new Set(activeCollection().services);
     state.collapsed = loadCollapsed();
+    saveFavorites();
 
     bind();
     applyStaticTranslations();

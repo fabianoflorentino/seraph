@@ -473,6 +473,39 @@ main {
   line-height: 1.5;
 }
 
+.favorites-collection {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.favorites-collection label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.favorites-collection select {
+  min-width: 9rem;
+  max-width: 16rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.55);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.favorites-collection .ghost {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.75rem;
+}
+
 .favorites-status {
   min-height: 1em;
   margin: 0.35rem 0 0;
@@ -656,6 +689,18 @@ main {
   color: var(--degraded);
   font-size: 0.7rem;
   font-weight: 700;
+}
+
+.group-alert--major {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--major);
+}
+
+.group-alert--unknown {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--unknown);
 }
 
 .group-toggle {
