@@ -4,7 +4,12 @@ coverage.out
 coverage.html
 
 # Generated snapshot (published by CI)
-site/data/*.json
+site/static/data/*.json
+
+# Hugo output and caches
+site/public/
+site/resources/
+site/.hugo_build.lock
 
 # Cloudflare Worker
 cloudflare/node_modules/

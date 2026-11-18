@@ -1,0 +1,16 @@
+baseURL = "https://fabianoflorentino.github.io/seraph/"
+languageCode = "en"
+title = "seraph"
+
+# The dashboard is a single page plus static assets; none of these kinds apply.
+disableKinds = ["taxonomy", "term", "RSS", "sitemap", "robotsTXT", "404"]
+
+[params]
+  description = "Independent status board for the services you depend on."
+
+# The snapshot changes every few minutes; never let the dev server cache it.
+[server]
+  [[server.headers]]
+    for = "/data/**"
+    [server.headers.values]
+      Cache-Control = "no-store"

@@ -1,4 +1,4 @@
-out_dir: site/data
+out_dir: site/static/data
 base_url: https://fabianoflorentino.github.io/seraph/data/state.json
 timeout: 8s
 concurrency: 12

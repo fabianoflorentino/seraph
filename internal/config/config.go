@@ -67,7 +67,7 @@ type Config struct {
 // Default returns the built-in configuration.
 func Default() *Config {
 	return &Config{
-		OutDir:      "site/data",
+		OutDir:      "site/static/data",
 		BaseURL:     "",
 		Timeout:     Duration(8 * time.Second),
 		Concurrency: 12,

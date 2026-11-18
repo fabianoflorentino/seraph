@@ -47,8 +47,8 @@ func TestLoadDefaults(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	if cfg.OutDir != "site/data" {
-		t.Errorf("OutDir = %q, want site/data", cfg.OutDir)
+	if cfg.OutDir != "site/static/data" {
+		t.Errorf("OutDir = %q, want site/static/data", cfg.OutDir)
 	}
 
 	if cfg.Concurrency != 12 {
