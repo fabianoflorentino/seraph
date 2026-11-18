@@ -32,31 +32,32 @@ serviços que importam. O seraph inverte isso:
   categorias recolhíveis e ranking de disponibilidade de 24h quando houver
   histórico.
 - **Instalável** — PWA com fallback offline; notificações ficam para depois.
-- **Seu** — favoritos ilimitados por região, guardados apenas no `localStorage`,
-  com exportação/importação JSON e link compartilhável para backup.
+- **Seu** — favoritos e coleções nomeadas por região, guardados apenas no
+  `localStorage`, com exportação/importação JSON e link compartilhável para
+  backup.
 - **Simples e barato** — GitHub Pages + um Worker da Cloudflare. Custo mensal
   zero, nenhuma infraestrutura para atualizar.
 
 ## Estado
 
-O marco **M1 (coletor)** está completo: `seraph sync` agora lê resumos do
-Documentos do Atlassian Statuspage e do status.io, endpoints JSON específicos e
-feeds RSS em paralelo, repete falhas transitórias e falha de forma suave por
-serviço. O
-catálogo inicial tem 24 serviços entre nuvem, IA, social, streaming, jogos,
-e-commerce, pagamentos e mensagens, incluindo AWS e Google Cloud. Fontes
-`probe` continuam como `unknown` com
-nota de erro até o coletor existir.
+O `seraph sync` lê documentos do Atlassian Statuspage e do status.io, endpoints
+JSON específicos e feeds RSS em paralelo, repete falhas transitórias e falha de
+forma suave por serviço. Ele mescla o snapshot anterior para o painel exibir um
+ranking de disponibilidade de 24h. O catálogo tem 43 serviços entre nuvem, IA,
+social, streaming, jogos, e-commerce, pagamentos e mensagens, incluindo AWS e
+Google Cloud. Fontes `probe` continuam como `unknown` com nota de erro até o
+coletor existir.
 
 ## Privacidade e retenção
 
-Favoritos são o único dado do usuário. Eles ficam no navegador sob
-`seraph.favorites.v1`; não há conta, analytics, rastreamento ou cópia no
-servidor. A exportação gera um backup JSON, e “Copiar link” cria uma URL que
-contém apenas os slugs públicos dos serviços. Limpar os dados do site, usar
-modo privado ou trocar de navegador/dispositivo remove a cópia local — importe
-o backup ou abra o link para restaurar. Sync por conta fica deliberadamente
-para uma fase paga posterior, opt-in.
+Favoritos e coleções nomeadas são o único dado do usuário. Eles ficam no
+navegador sob `seraph.favorites.v1` e `seraph.collections.v1`; não há conta,
+analytics, rastreamento ou cópia no servidor. A exportação gera backup da
+coleção ativa, e “Copiar link” cria uma URL que contém apenas os slugs públicos
+dela. Limpar os dados do site, usar modo privado ou trocar de
+navegador/dispositivo remove a cópia local — importe cada backup ou abra o link
+para restaurar. Sync por conta fica deliberadamente para uma fase paga
+posterior, opt-in.
 
 ## Como funciona
 
@@ -101,6 +102,8 @@ overrides e solução de problemas.
 
 ```bash
 make validate   # valida o catálogo, sem rede
+make catalog-inspect CATALOG_TARGET=example.com
+make catalog-audit
 make sync       # grava site/static/data/state.json
 make preview    # compila e serve em segundo plano em http://localhost:8000
 make preview/logs   # acompanha requisições e erros
@@ -121,20 +124,29 @@ python3 -m http.server -d site/public 8000
 
 ## CLI
 
-| Comando    | Propósito                                          |
-| ---------- | -------------------------------------------------- |
-| `version`  | Mostra versão, commit e data do build.             |
-| `validate` | Valida todos os packs do catálogo; sem rede.       |
-| `sync`     | Coleta os serviços e grava o snapshot.             |
+| Comando           | Propósito                                             |
+| ----------------- | ----------------------------------------------------- |
+| `version`         | Mostra versão, commit e data do build.                |
+| `catalog add`     | Adiciona um serviço ao pack e valida o catálogo.      |
+| `catalog inspect` | Descobre fontes de status de um domínio e gera YAML.  |
+| `catalog audit`   | Coleta todas as fontes e reporta a saúde.             |
+| `validate`        | Valida todos os packs do catálogo; sem rede.          |
+| `sync`            | Coleta os serviços e grava o snapshot.                |
 
 Flags globais: `--config <path>`, `--log-level <level>`. `sync` e `validate`
 aceitam `--catalog <dir>` (padrão `catalog/packs`).
 
 ```bash
 seraph --help
+seraph catalog inspect github.com
+seraph catalog audit --catalog catalog/packs
 seraph validate --catalog catalog/packs
 seraph sync --catalog catalog/packs --log-level debug
 ```
+
+O `inspect` testa formatos conhecidos de statuspage, status.io, JSON e RSS e
+imprime uma entrada draft. O `audit` coleta o catálogo inteiro e reporta
+latência, status, tipo de fonte e falhas sem gravar snapshot.
 
 ## Configuração
 

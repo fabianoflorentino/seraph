@@ -16,8 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for transient failures, component scoping, and per-service error handling.
 - status.io, service-specific JSON (Slack, Stripe, AWS, and GCP), and RSS
   collectors.
-- Initial 24-service catalog covering cloud, AI, social, streaming, gaming,
+- Initial 43-service catalog covering cloud, AI, social, streaming, gaming,
   ecommerce, payments, and messaging, with an `ai` category.
+- Catalog discovery (`catalog inspect`) with draft YAML generation and a
+  read-only source health audit (`catalog audit`).
 - Clickable service cards that open the official site, layered component
   shadows, and a reduced-motion-aware ember backdrop.
 - Animated All/Favorites segmented control and EN/pt-BR switch with smooth
@@ -35,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fallback for assets and the latest snapshot.
 - Local-only favorite backup/share controls: JSON export/import and a link
   containing only public service slugs, plus an explicit privacy notice.
+- Named favorite collections with local switching, creation, rename, delete,
+  and collection-scoped export/share.
 - `seraph catalog add` and `make catalog-add` for validated YAML catalog edits.
 - Category and region tags on service cards; the region filter only appears
   when more than one region is available.
@@ -58,5 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The snapshot error banner stayed visible because its `display: flex` rule
   overrode the `hidden` attribute; `[hidden]` now always hides elements.
+- Segment now uses its canonical Statuspage API host so a local DNS sinkhole
+  returning `0.0.0.0` cannot produce a false `unknown`.
+- Category attention badges now separate major (red), degraded (amber), and
+  unknown (gray) counts instead of one aggregate amber badge.
 
 [Unreleased]: https://github.com/fabianoflorentino/seraph/commits/main

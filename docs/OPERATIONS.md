@@ -47,6 +47,8 @@ make dev/logs    # follow both services
 make dev/down    # stop the stack
 make build       # bin/seraph with version metadata
 make validate    # catalog validation only
+make catalog-inspect CATALOG_TARGET=example.com
+make catalog-audit
 make sync        # write site/static/data/state.json
 make preview     # build the Hugo site, serve http://localhost:8000
 make test        # race + shuffle
@@ -100,6 +102,7 @@ Precedence is **flag > environment > file > default**.
 | Banner in the dashboard, old data    | Pages deploy failed                             | Inspect the latest Actions run; data stays stale, not lost. |
 | Catalog valid but card missing       | Region or favorites filter                      | Check the region buttons and the favorites toggle.       |
 | Card shows `unknown` with an error   | Source unreachable, HTTP error, or bad payload  | Open the status page, then check the workflow log for the service slug. |
+| `dial tcp 0.0.0.0:443`               | DNS sinkhole/adblock or split DNS on the runner | Allowlist the status host or use its canonical Statuspage host.          |
 | Availability panel missing           | Fewer than three observations in 24h            | Let the collector run; history forms after a few checks.                 |
 
 ## Incident playbook

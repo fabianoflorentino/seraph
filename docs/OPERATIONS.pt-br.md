@@ -49,6 +49,8 @@ make dev/logs    # acompanha os dois serviços
 make dev/down    # para o ambiente
 make build       # bin/seraph com metadados de versão
 make validate    # apenas validação do catálogo
+make catalog-inspect CATALOG_TARGET=example.com
+make catalog-audit
 make sync        # grava site/static/data/state.json
 make preview     # compila o Hugo e serve em http://localhost:8000
 make test        # race + shuffle
@@ -102,6 +104,7 @@ existe. A precedência é **flag > ambiente > arquivo > padrão**.
 | Banner no painel, dados antigos       | Deploy do Pages falhou                           | Ver a última execução em Actions; dados ficam antigos, não somem. |
 | Catálogo válido mas card ausente      | Filtro de região ou favoritos                    | Conferir os botões de região e a aba de favoritos.       |
 | Card `unknown` com erro               | Fonte inacessível, erro HTTP ou payload inválido | Abrir a status page e conferir o log do workflow para o slug do serviço. |
+| `dial tcp 0.0.0.0:443`                | DNS sinkhole/adblock ou DNS dividido no runner  | Liberar o host de status ou usar o host canônico do Statuspage.           |
 | Painel de disponibilidade ausente     | Menos de três observações em 24h                 | Aguardar o coletor; o histórico aparece após algumas verificações.       |
 
 ## Playbook de incidente

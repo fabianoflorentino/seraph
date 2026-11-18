@@ -101,12 +101,13 @@ ranking from those points. The dashboard links cards to `status_url` when
 present, falling back to `official_url`. It treats every field as optional
 except `slug`, `name`, `category`, `regions`, and `status`.
 
-Favorites are deliberately **not** in the snapshot. They live in
-`localStorage` under `seraph.*.v1` keys, so the published artifact stays
+Favorites and named collections are deliberately **not** in the snapshot. They
+live in `localStorage` under `seraph.*.v1` keys, so the published artifact stays
 anonymous and cacheable. This is the privacy boundary: there is no account,
-server copy, or analytics. Users can export a versioned JSON backup or copy a
-link that contains only service slugs; clearing browser data or changing devices
-requires one of those to restore. Account sync remains a later opt-in feature.
+server copy, or analytics. Users can export the active collection as a
+versioned JSON backup or copy a link that contains only service slugs; clearing
+browser data or changing devices requires one of those to restore. Account sync
+remains a later opt-in feature.
 
 ## Reliability choices
 

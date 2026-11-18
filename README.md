@@ -32,8 +32,8 @@ care about. seraph inverts that:
   categories, and a 24-hour availability ranking once history builds up.
 - **Installable** — PWA shell with an offline fallback; notifications come
   later.
-- **Yours** — unlimited favorites per region, stored only in `localStorage`,
-  with JSON export/import and a shareable link for backup.
+- **Yours** — unlimited favorites and named collections per region, stored only
+  in `localStorage`, with JSON export/import and a shareable link for backup.
 - **Boring and cheap** — GitHub Pages + one Cloudflare Worker. Zero monthly cost,
   no infrastructure to patch.
 
@@ -42,20 +42,20 @@ care about. seraph inverts that:
 `seraph sync` reads Atlassian Statuspage documents, status.io documents,
 service-specific JSON endpoints, and RSS feeds concurrently, retries transient
 failures, and fails soft per service. It merges the previous snapshot so the
-dashboard can show a 24-hour availability ranking. The initial catalog has 24
-services across cloud, AI, social, streaming, gaming, ecommerce, payments, and
-messaging, including AWS and Google Cloud. `probe` sources still render as
+dashboard can show a 24-hour availability ranking. The catalog has 43 services
+across cloud, AI, social, streaming, gaming, ecommerce, payments, and messaging,
+including AWS and Google Cloud. `probe` sources still render as
 `unknown` with an error note until that collector lands.
 
 ## Privacy and data retention
 
-Favorites are the only user data. They stay in the browser under
-`seraph.favorites.v1`; there is no account, analytics, tracking, or server-side
-copy. Export produces a JSON backup, and “Copy link” creates a URL containing
-only the public service slugs. Clearing site data, using private mode, or
-changing browser/device removes the local copy — import the backup or open the
-link to restore it. Account-based sync is intentionally left for a later,
-opt-in paid phase.
+Favorites and named collections are the only user data. They stay in the
+browser under `seraph.favorites.v1` and `seraph.collections.v1`; there is no
+account, analytics, tracking, or server-side copy. Export backs up the active
+collection, and “Copy link” creates a URL containing only its public service
+slugs. Clearing site data, using private mode, or changing browser/device
+removes the local copy — import each backup or open the link to restore it.
+Account-based sync is intentionally left for a later, opt-in paid phase.
 
 ## How it works
 
@@ -101,6 +101,8 @@ troubleshooting.
 
 ```bash
 make validate   # check the catalog, no network
+make catalog-inspect CATALOG_TARGET=example.com
+make catalog-audit
 make sync       # write site/static/data/state.json
 make preview    # build and serve in the background on http://localhost:8000
 make preview/logs   # follow requests and errors
@@ -121,21 +123,29 @@ python3 -m http.server -d site/public 8000
 
 ## CLI
 
-| Command       | Purpose                                         |
-| ------------- | ----------------------------------------------- |
-| `version`     | Print version, commit, and build date.          |
-| `catalog add` | Add a service to a pack and validate the catalog. |
-| `validate`    | Validate every catalog pack; no network access. |
-| `sync`        | Collect services and write the snapshot.        |
+| Command           | Purpose                                             |
+| ----------------- | --------------------------------------------------- |
+| `version`         | Print version, commit, and build date.              |
+| `catalog add`     | Add a service to a pack and validate the catalog.   |
+| `catalog inspect` | Discover status sources for a domain and draft YAML. |
+| `catalog audit`   | Collect every source and report health.             |
+| `validate`        | Validate every catalog pack; no network access.     |
+| `sync`            | Collect services and write the snapshot.            |
 
 Global flags: `--config <path>`, `--log-level <level>`. `sync` and `validate`
 accept `--catalog <dir>` (default `catalog/packs`).
 
 ```bash
 seraph --help
+seraph catalog inspect github.com
+seraph catalog audit --catalog catalog/packs
 seraph validate --catalog catalog/packs
 seraph sync --catalog catalog/packs --log-level debug
 ```
+
+The inspect command probes known statuspage, status.io, JSON, and RSS shapes and
+prints a draft entry. The audit command collects the full catalog and reports
+latency, status, source type, and failures without writing a snapshot.
 
 ## Configuration
 

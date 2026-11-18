@@ -191,8 +191,10 @@ br.yaml: nubank.category: unsupported category "fintech"
 
 1. Escolha o pack: `global.yaml` para serviços mundiais, um pack regional como
    `br.yaml` para locais.
-2. Prefira uma status page ou feed oficial. Use o adapter que corresponde ao
-   provedor; nunca faça scraping de HTML ou de uma home page de marketing.
+2. Prefira uma status page ou feed oficial. Use `seraph catalog inspect <domínio>`
+   para testar formatos conhecidos e imprimir um draft; revise manualmente. Use
+   o adapter que corresponde ao provedor; nunca faça scraping de HTML ou de uma
+   home page de marketing.
 3. Adicione a entrada com um slug estável e legível:
 
    ```bash
