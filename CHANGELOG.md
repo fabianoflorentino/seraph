@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The container build now targets the internal `seraph.localhost` origin; no
+  public DNS name is required.
 - `make preview` now serves the built site in the background and returns the
   terminal, with `preview/logs`, `preview/status`, and `preview/stop` targets.
 - The ember backdrop now spans the whole document instead of only the first

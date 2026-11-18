@@ -19,7 +19,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o
 
 FROM --platform=$BUILDPLATFORM hugomods/hugo:0.158.0 AS site
 
-ARG HUGO_BASEURL=https://seraph.srectl.fabianoflorentino.dev/
+ARG HUGO_BASEURL=http://seraph.localhost/
 WORKDIR /src
 COPY site ./site
 RUN hugo --source site --minify --gc --cleanDestinationDir --baseURL "${HUGO_BASEURL}"
@@ -44,7 +44,6 @@ USER 101:101
 WORKDIR /app
 
 ENV SERAPH_OUT_DIR=/usr/share/nginx/html/data \
-    SERAPH_BASE_URL=https://seraph.srectl.fabianoflorentino.dev/data/state.json \
     SERAPH_SYNC_INTERVAL=300
 
 EXPOSE 8080

@@ -70,7 +70,7 @@ python3 -m http.server -d site/public 8000
 The production image is defined by the root `Dockerfile`:
 
 - Hugo builds `site/` with `HUGO_BASEURL` (default
-  `https://seraph.srectl.fabianoflorentino.dev/`).
+  `http://seraph.localhost/`).
 - Go builds a static `seraph` binary for the target platform.
 - The runtime is `nginx-unprivileged` on port `8080`; `docker/entrypoint.sh`
   validates the catalog, starts a collector loop, and serves the site.
@@ -87,7 +87,7 @@ make docker-push IMAGE_TAG=v0.1.0
 | Setting | Default in image | Purpose |
 | --- | --- | --- |
 | `SERAPH_OUT_DIR` | `/usr/share/nginx/html/data` | Snapshot directory. |
-| `SERAPH_BASE_URL` | internal `state.json` URL | Optional public snapshot URL. |
+| `SERAPH_BASE_URL` | unset | Optional public HTTPS snapshot URL. |
 | `SERAPH_SYNC_INTERVAL` | `300` | Seconds between collector runs. |
 
 Health endpoints: `/healthz` for the process, `/data/state.json` for data

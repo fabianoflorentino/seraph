@@ -231,8 +231,7 @@ Configure os segredos do ambiente `DOCKERHUB`: `DOCKERHUB_USERNAME` e
 
 A implantação interna fica na árvore GitOps do
 [srectl](https://github.com/fabianoflorentino/srectl) em
-`deploy/projects/seraph`, exposta como `seraph.localhost` (e opcionalmente
-`seraph.srectl.fabianoflorentino.dev`).
+`deploy/projects/seraph`, exposta apenas dentro do cluster como `seraph.localhost`.
 
 ## Desenvolvimento
 

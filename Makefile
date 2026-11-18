@@ -26,7 +26,7 @@ PREVIEW_LOG?=$(PREVIEW_DIR)/server.log
 PREVIEW_PID?=$(PREVIEW_DIR)/server.pid
 IMAGE?=fabianoflorentino/seraph
 IMAGE_TAG?=dev
-HUGO_BASEURL?=https://seraph.srectl.fabianoflorentino.dev/
+HUGO_BASEURL?=http://seraph.localhost/
 DEV_ENV=env UID=$(shell id -u) GID=$(shell id -g) SITE_PORT=$(SITE_PORT) SERAPH_DEV_INTERVAL=$(DEV_INTERVAL)
 HUGO_IMAGE=hugomods/hugo:0.158.0
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev)

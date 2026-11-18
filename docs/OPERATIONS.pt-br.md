@@ -72,7 +72,7 @@ python3 -m http.server -d site/public 8000
 A imagem de produção é definida pelo `Dockerfile` da raiz:
 
 - O Hugo compila `site/` com `HUGO_BASEURL` (padrão
-  `https://seraph.srectl.fabianoflorentino.dev/`).
+  `http://seraph.localhost/`).
 - O Go compila um binário estático `seraph` para a plataforma alvo.
 - O runtime é `nginx-unprivileged` na porta `8080`; `docker/entrypoint.sh`
   valida o catálogo, inicia o loop do coletor e serve o site.
@@ -89,7 +89,7 @@ make docker-push IMAGE_TAG=v0.1.0
 | Variável | Padrão na imagem | Função |
 | --- | --- | --- |
 | `SERAPH_OUT_DIR` | `/usr/share/nginx/html/data` | Diretório do snapshot. |
-| `SERAPH_BASE_URL` | URL interna de `state.json` | URL pública opcional. |
+| `SERAPH_BASE_URL` | vazio | URL pública HTTPS opcional. |
 | `SERAPH_SYNC_INTERVAL` | `300` | Segundos entre coletas. |
 
 Endpoints: `/healthz` para o processo e `/data/state.json` para prontidão dos

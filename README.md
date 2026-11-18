@@ -231,8 +231,7 @@ skips publishing instead of failing CI.
 
 The internal deployment lives in the
 [srectl](https://github.com/fabianoflorentino/srectl) GitOps tree at
-`deploy/projects/seraph`, exposed as `seraph.localhost` (and optionally
-`seraph.srectl.fabianoflorentino.dev`).
+`deploy/projects/seraph`, exposed only inside the cluster as `seraph.localhost`.
 
 ## Development
 
