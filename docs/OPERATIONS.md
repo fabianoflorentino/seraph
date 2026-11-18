@@ -5,7 +5,9 @@ English | [Português](OPERATIONS.pt-br.md)
 ## One-time setup
 
 1. **Repository:** create the public repository `fabianoflorentino/seraph`.
-2. **Pages:** Settings → Pages → Source: *GitHub Actions*.
+2. **Pages:** Settings → Pages → Source: *GitHub Actions*. Set the custom
+   domain `seraph.fabianoflorentino.dev` and point its DNS CNAME to
+   `fabianoflorentino.github.io`. Hugo publishes `site/static/CNAME`.
 3. **Workflow permissions:** Settings → Actions → General → allow GitHub
    Actions to create deployments (default for Pages).
 4. **Cloudflare Worker:**
