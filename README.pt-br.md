@@ -43,7 +43,7 @@ serviços que importam. O seraph inverte isso:
 O `seraph sync` lê documentos do Atlassian Statuspage e do status.io, endpoints
 JSON específicos e feeds RSS em paralelo, repete falhas transitórias e falha de
 forma suave por serviço. Ele mescla o snapshot anterior para o painel exibir um
-ranking de disponibilidade de 24h. O catálogo tem 43 serviços entre nuvem, IA,
+ranking de disponibilidade de 24h. O catálogo tem 50 serviços entre nuvem, IA,
 social, streaming, jogos, e-commerce, pagamentos e mensagens, incluindo AWS e
 Google Cloud. Fontes `probe` continuam como `unknown` com nota de erro até o
 coletor existir.
@@ -234,7 +234,7 @@ lefthook install
 - **M1 (concluído)** — coletor `statuspage`, retentativas e erro por serviço.
 - **M2** — primeiro serviço brasileiro, exercitando regiões de ponta a ponta.
 - **M3** — coletor `probe` para endpoints oficiais de saúde.
-- **M4** — ampliar o catálogo para ~50 serviços, Brasil + global.
+- **M4 (concluído)** — catálogo com 50 serviços, Brasil + global.
 - **Histórico (concluído)** — retenção de 24h e ranking de disponibilidade.
 - **PWA (concluído)** — manifest, ícones, service worker e shell offline.
 - **Depois** — notificações PWA e comparação de latência por região.

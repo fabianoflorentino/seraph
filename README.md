@@ -43,7 +43,7 @@ care about. seraph inverts that:
 `seraph sync` reads Atlassian Statuspage documents, status.io documents,
 service-specific JSON endpoints, and RSS feeds concurrently, retries transient
 failures, and fails soft per service. It merges the previous snapshot so the
-dashboard can show a 24-hour availability ranking. The catalog has 43 services
+dashboard can show a 24-hour availability ranking. The catalog has 50 services
 across cloud, AI, social, streaming, gaming, ecommerce, payments, and messaging,
 including AWS and Google Cloud. `probe` sources still render as
 `unknown` with an error note until that collector lands.
@@ -232,7 +232,7 @@ lefthook install
 - **M1 (done)** — `statuspage` collector, retries, and per-service error handling.
 - **M2** — first Brazilian service, exercising regions end to end.
 - **M3** — `probe` collector for official health endpoints.
-- **M4** — expand the catalog toward ~50 services, Brazil + global.
+- **M4 (done)** — catalog at 50 services, Brazil + global.
 - **History (done)** — 24-hour retention and availability ranking.
 - **PWA install (done)** — manifest, icons, service worker, and offline shell.
 - **Later** — PWA notifications and per-region latency comparisons.

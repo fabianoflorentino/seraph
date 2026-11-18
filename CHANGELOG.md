@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for transient failures, component scoping, and per-service error handling.
 - status.io, service-specific JSON (Slack, Stripe, AWS, and GCP), and RSS
   collectors.
-- Initial 43-service catalog covering cloud, AI, social, streaming, gaming,
+- Initial 50-service catalog covering cloud, AI, social, streaming, gaming,
   ecommerce, payments, and messaging, with an `ai` category.
 - Catalog discovery (`catalog inspect`) with draft YAML generation and a
   read-only source health audit (`catalog audit`).

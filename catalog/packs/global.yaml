@@ -434,3 +434,73 @@ services:
     source:
       type: statuspage
       url: https://status.hubspot.com/api/v2/summary.json
+  - slug: digitalocean
+    name: DigitalOcean
+    category: cloud
+    official_url: https://www.digitalocean.com
+    status_url: https://status.digitalocean.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.digitalocean.com/api/v2/summary.json
+  - slug: asana
+    name: Asana
+    category: cloud
+    official_url: https://asana.com
+    status_url: https://status.asana.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.asana.com/api/v2/summary.json
+  - slug: plaid
+    name: Plaid
+    category: payments
+    official_url: https://plaid.com
+    status_url: https://status.plaid.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.plaid.com/api/v2/summary.json
+  - slug: miro
+    name: Miro
+    category: cloud
+    official_url: https://miro.com
+    status_url: https://status.miro.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.miro.com/api/v2/summary.json
+  - slug: replit
+    name: Replit
+    category: cloud
+    official_url: https://replit.com
+    status_url: https://status.replit.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.replit.com/api/v2/summary.json
+  - slug: postman
+    name: Postman
+    category: cloud
+    official_url: https://www.postman.com
+    status_url: https://status.postman.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.postman.com/api/v2/summary.json
+  - slug: sendgrid
+    name: SendGrid
+    category: messaging
+    official_url: https://sendgrid.com
+    status_url: https://status.sendgrid.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.sendgrid.com/api/v2/summary.json
