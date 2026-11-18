@@ -95,6 +95,7 @@ existe. A precedência é **flag > ambiente > arquivo > padrão**.
 | `invalid catalog: ... duplicate slug` | Mesmo slug em dois packs                         | Manter uma definição e referenciar a região correta.     |
 | Banner no painel, dados antigos       | Deploy do Pages falhou                           | Ver a última execução em Actions; dados ficam antigos, não somem. |
 | Catálogo válido mas card ausente      | Filtro de região ou favoritos                    | Conferir os botões de região e a aba de favoritos.       |
+| Card `unknown` com erro               | Fonte inacessível, erro HTTP ou payload inválido | Abrir a status page e conferir o log do workflow para o slug do serviço. |
 
 ## Playbook de incidente
 

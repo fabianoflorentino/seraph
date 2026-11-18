@@ -9,7 +9,7 @@
 
 seraph is an independent, ad-free status board for the services you actually
 depend on: banks, payment networks, carriers, clouds, messaging apps, and more.
-It reads **official status pages and direct HTTP probes**, then publishes a
+It reads **official status pages and feeds**, then publishes a
 static JSON snapshot that a lightweight dashboard renders in English and
 Brazilian Portuguese.
 
@@ -22,20 +22,25 @@ Aggregators like Downdetector rely on user reports and page scraping: results
 lag, ads get in the way, and there is no way to pin exactly the services you
 care about. seraph inverts that:
 
-- **Official signals first** — status pages and probes, never scraped
+- **Official signals first** — official status pages and feeds, never scraped
   aggregators.
 - **Real freshness** — a reliable five-minute cron publishes a snapshot every
   5–20 minutes.
+- **At a glance** — overview cards, an attention filter, and collapsible
+  categories, with status attention kept visible.
 - **Yours** — unlimited favorites per region, stored only in `localStorage`.
 - **Boring and cheap** — GitHub Pages + one Cloudflare Worker. Zero monthly cost,
   no infrastructure to patch.
 
 ## Status
 
-Milestone **M0 (skeleton)** is complete: CLI, catalog validation, snapshot
-schema, bilingual site, Cloudflare dispatcher, CI, and docs. Collectors are the
-next milestone; until they land, `seraph sync` marks every service as `unknown`
-so the full pipeline can be exercised end to end.
+Milestone **M1 (collector)** is complete: `seraph sync` now reads Atlassian
+Statuspage documents, status.io documents, service-specific JSON endpoints, and
+RSS feeds concurrently, retries transient failures, and fails soft per service. The
+initial catalog has 24 services across cloud, AI, social, streaming, gaming,
+ecommerce, payments, and messaging, including AWS and Google Cloud. `probe`
+sources still render as `unknown`
+with an error note until that collector lands.
 
 ## How it works
 
@@ -82,8 +87,13 @@ troubleshooting.
 ```bash
 make validate   # check the catalog, no network
 make sync       # write site/static/data/state.json
-make preview    # build the Hugo site and serve on http://localhost:8000
+make preview    # build and serve in the background on http://localhost:8000
+make preview/logs   # follow requests and errors
+make preview/stop   # stop the preview server
 ```
+
+`make preview` returns immediately. Logs go to `.preview/server.log`; override the
+port with `make preview PREVIEW_PORT=8080`.
 
 Prefer plain Go for the CLI?
 
@@ -96,11 +106,12 @@ python3 -m http.server -d site/public 8000
 
 ## CLI
 
-| Command    | Purpose                                         |
-| ---------- | ----------------------------------------------- |
-| `version`  | Print version, commit, and build date.          |
-| `validate` | Validate every catalog pack; no network access. |
-| `sync`     | Collect services and write the snapshot.        |
+| Command       | Purpose                                         |
+| ------------- | ----------------------------------------------- |
+| `version`     | Print version, commit, and build date.          |
+| `catalog add` | Add a service to a pack and validate the catalog. |
+| `validate`    | Validate every catalog pack; no network access. |
+| `sync`        | Collect services and write the snapshot.        |
 
 Global flags: `--config <path>`, `--log-level <level>`. `sync` and `validate`
 accept `--catalog <dir>` (default `catalog/packs`).
@@ -139,6 +150,7 @@ services:
     name: GitHub
     category: cloud
     official_url: https://github.com
+    status_url: https://www.githubstatus.com
     regions:
       global: primary
     source:
@@ -146,10 +158,20 @@ services:
       url: https://www.githubstatus.com/api/v2/summary.json
 ```
 
-Packs live in `catalog/packs/`. Source types are `statuspage`, `statusio`,
-`rss`, and `probe`; regions are `global` plus ISO 3166-1 alpha-2 codes. The full
-schema, validation rules, and a service-adding checklist are in
-[docs/CATALOG.md](docs/CATALOG.md).
+Packs live in `catalog/packs/`. Add a service without editing YAML by hand:
+
+```bash
+make catalog-add CATALOG_SLUG=example CATALOG_NAME=Example CATALOG_CATEGORY=cloud \
+  CATALOG_OFFICIAL_URL=https://example.com CATALOG_STATUS_URL=https://status.example.com \
+  CATALOG_SOURCE_TYPE=statuspage CATALOG_SOURCE_URL=https://status.example.com/api/v2/summary.json
+```
+
+The command validates every pack before writing and leaves the file untouched
+on error. The schema recognizes `statuspage`, `statusio`, `rss`, `json`, and
+`probe`; `statuspage`, `statusio`, `rss`, and `json` are implemented today.
+Regions are
+`global` plus ISO 3166-1 alpha-2 codes. The full schema, validation rules, and a
+service-adding checklist are in [docs/CATALOG.md](docs/CATALOG.md).
 
 ## Deployment
 
@@ -181,10 +203,10 @@ lefthook install
 
 ## Roadmap
 
-- **M1** — `statuspage` collector and per-service error handling.
+- **M1 (done)** — `statuspage` collector, retries, and per-service error handling.
 - **M2** — first Brazilian service, exercising regions end to end.
-- **M3** — `probe` collector for services without a status page.
-- **M4** — full catalog (~50 services, Brazil + global).
+- **M3** — `probe` collector for official health endpoints.
+- **M4** — expand the catalog toward ~50 services, Brazil + global.
 - **Later** — history retention, installable PWA with notifications.
 
 ## License

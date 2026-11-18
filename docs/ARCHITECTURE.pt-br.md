@@ -13,7 +13,7 @@ Restrições de projeto:
 - **Zero infraestrutura.** JSON estático no GitHub Pages, sem servidor ou banco.
 - **Frescor real.** Um snapshot a cada 5–20 minutos, com cron confiável.
 - **Favoritos ilimitados.** Guardados no navegador; sem contas, sem rastreio.
-- **Fontes oficiais primeiro.** Apenas status pages e sondagens HTTP diretas.
+- **Fontes oficiais primeiro.** Apenas status pages e feeds oficiais.
 - **Operação entediante.** Se o GitHub cair, o último snapshot continua servindo.
 
 ## Componentes
@@ -42,7 +42,7 @@ Restrições de projeto:
 | Catálogo     | `internal/catalog`           | Carregar, validar e mesclar packs YAML.           |
 | Estado       | `internal/state`             | Schema do snapshot, escrita atômica, leitura.     |
 | Config       | `internal/config`            | Arquivo + ambiente `SERAPH_*` + flags.            |
-| Coletores    | planejado (`internal/collector`) | Status pages e sondagens (roadmap).           |
+| Coletores    | `internal/collector`         | Observações de status page, status.io, JSON e RSS. |
 | Site         | `site/`                      | Site Hugo: painel, i18n, favoritos.               |
 | Dispatcher   | `cloudflare/`                | Cron de cinco minutos → `workflow_dispatch`.      |
 | CI/CD        | `.github/workflows/`          | Lint, testes, cobertura, build, deploy do Pages.  |
@@ -68,6 +68,7 @@ Restrições de projeto:
 | `internal/cmd`       | `version`, `sync`, `validate`; helpers de config e logger.   |
 | `internal/config`    | Configuração tipada com validação e overrides de ambiente.   |
 | `internal/catalog`   | Tipos do catálogo, regras de validação, carregamento de packs. |
+| `internal/collector` | Cliente Statuspage, retentativas, concorrência, mapeamento.   |
 | `internal/state`     | Tipos do snapshot, persistência atômica, versão de schema.   |
 | `internal/version`   | Metadados de build via `-ldflags`.                           |
 | `catalog/packs`      | Definições YAML agrupadas por público/região.                |
@@ -76,7 +77,7 @@ Restrições de projeto:
 | `cloudflare`         | Worker despachante de cron.                                  |
 
 Dependências são injetadas por construtores; não há estado mutável global.
-Coletores receberão `*http.Client` e um relógio para testes sem rede.
+Coletores aceitam `*http.Client` e um relógio para testes sem rede.
 
 ## Desenvolvimento local
 
@@ -91,9 +92,10 @@ publicar. Detalhes e overrides: [DEVELOPMENT.pt-br.md](DEVELOPMENT.pt-br.md).
 `schema_version` é independente da versão da aplicação. Mudanças incompatíveis
 incrementam o número; leitores rejeitam versões desconhecidas com
 `ErrUnsupportedSchema`. Cada serviço traz status, regiões, horário da
-observação, latência opcional, erro opcional e um histórico curto. O painel
-trata todo campo como opcional, exceto `slug`, `name`, `category`, `regions` e
-`status`.
+observação, latência opcional, erro opcional, `official_url` e `status_url`
+opcionais, além de um histórico curto. O painel usa `status_url` como link do
+card quando presente, com fallback para `official_url`. Trata todo campo como
+opcional, exceto `slug`, `name`, `category`, `regions` e `status`.
 
 Favoritos **não** entram no snapshot. Eles ficam no `localStorage` sob chaves
 `seraph.*.v1`, mantendo o artefato público anônimo e cacheável.
@@ -112,7 +114,7 @@ Favoritos **não** entram no snapshot. Eles ficam no `localStorage` sob chaves
 
 ## Roadmap
 
-1. `internal/collector`: implementações statuspage, status.io, RSS e probe.
+1. `internal/collector`: implementações status.io, RSS e probe.
 2. Retenção de histórico entre execuções (merge do `state.json` anterior).
 3. PWA instalável com notificações locais para favoritos.
 4. Comparação de latência por região (múltiplos locais de sondagem).

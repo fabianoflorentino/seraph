@@ -93,6 +93,7 @@ Precedence is **flag > environment > file > default**.
 | `invalid catalog: ... duplicate slug`| Same slug in two packs                          | Keep one definition, reference it from the right region. |
 | Banner in the dashboard, old data    | Pages deploy failed                             | Inspect the latest Actions run; data stays stale, not lost. |
 | Catalog valid but card missing       | Region or favorites filter                      | Check the region buttons and the favorites toggle.       |
+| Card shows `unknown` with an error   | Source unreachable, HTTP error, or bad payload  | Open the status page, then check the workflow log for the service slug. |
 
 ## Incident playbook
 

@@ -9,8 +9,8 @@
 
 O seraph é um painel de status independente e sem anúncios para os serviços dos
 quais você realmente depende: bancos, meios de pagamento, operadoras, nuvens,
-mensageiros e mais. Ele lê **status pages oficiais e sondagens HTTP diretas** e
-publica um snapshot JSON estático, renderizado por um painel leve em inglês e
+mensageiros e mais. Ele lê **status pages e feeds oficiais** e publica um
+snapshot JSON estático, renderizado por um painel leve em inglês e
 português do Brasil.
 
 Sem conta, sem servidor, sem banco de dados. Os favoritos são ilimitados e ficam
@@ -22,20 +22,26 @@ Agregadores como o Downdetector dependem de relatos de usuários e scraping:
 resultados atrasados, anúncios no caminho e nenhuma forma de fixar exatamente os
 serviços que importam. O seraph inverte isso:
 
-- **Fontes oficiais primeiro** — status pages e sondagens, nunca scraping de
-  agregadores.
+- **Fontes oficiais primeiro** — status pages e feeds oficiais, nunca scraping
+  de agregadores.
 - **Frescor real** — um cron confiável de cinco minutos publica um snapshot a
   cada 5–20 minutos.
+- **Visão rápida** — cards de resumo, filtro de atenção e categorias
+  recolhíveis, com os alertas sempre visíveis.
 - **Seu** — favoritos ilimitados por região, guardados apenas no `localStorage`.
 - **Simples e barato** — GitHub Pages + um Worker da Cloudflare. Custo mensal
   zero, nenhuma infraestrutura para atualizar.
 
 ## Estado
 
-O marco **M0 (esqueleto)** está completo: CLI, validação de catálogo, schema do
-snapshot, site bilíngue, despachante na Cloudflare, CI e documentação. Os
-coletores são o próximo marco; até lá, `seraph sync` marca todo serviço como
-`unknown`, permitindo exercitar o fluxo de ponta a ponta.
+O marco **M1 (coletor)** está completo: `seraph sync` agora lê resumos do
+Documentos do Atlassian Statuspage e do status.io, endpoints JSON específicos e
+feeds RSS em paralelo, repete falhas transitórias e falha de forma suave por
+serviço. O
+catálogo inicial tem 24 serviços entre nuvem, IA, social, streaming, jogos,
+e-commerce, pagamentos e mensagens, incluindo AWS e Google Cloud. Fontes
+`probe` continuam como `unknown` com
+nota de erro até o coletor existir.
 
 ## Como funciona
 
@@ -81,8 +87,13 @@ overrides e solução de problemas.
 ```bash
 make validate   # valida o catálogo, sem rede
 make sync       # grava site/static/data/state.json
-make preview    # compila o Hugo e serve em http://localhost:8000
+make preview    # compila e serve em segundo plano em http://localhost:8000
+make preview/logs   # acompanha requisições e erros
+make preview/stop   # para o servidor de preview
 ```
+
+`make preview` retorna imediatamente. Os logs ficam em `.preview/server.log`;
+para outra porta use `make preview PREVIEW_PORT=8080`.
 
 Prefere Go puro para a CLI?
 
@@ -138,6 +149,7 @@ services:
     name: GitHub
     category: cloud
     official_url: https://github.com
+    status_url: https://www.githubstatus.com
     regions:
       global: primary
     source:
@@ -145,10 +157,21 @@ services:
       url: https://www.githubstatus.com/api/v2/summary.json
 ```
 
-Os packs ficam em `catalog/packs/`. Os tipos de fonte são `statuspage`,
-`statusio`, `rss` e `probe`; as regiões são `global` mais códigos ISO 3166-1
-alpha-2. O schema completo, as regras de validação e o checklist para adicionar
-um serviço estão em [docs/CATALOG.pt-br.md](docs/CATALOG.pt-br.md).
+Os packs ficam em `catalog/packs/`. Para adicionar um serviço sem editar YAML:
+
+```bash
+make catalog-add CATALOG_SLUG=example CATALOG_NAME=Example CATALOG_CATEGORY=cloud \
+  CATALOG_OFFICIAL_URL=https://example.com CATALOG_STATUS_URL=https://status.example.com \
+  CATALOG_SOURCE_TYPE=statuspage CATALOG_SOURCE_URL=https://status.example.com/api/v2/summary.json
+```
+
+O comando valida todos os packs antes de gravar e deixa o arquivo intacto em
+caso de erro. O schema reconhece `statuspage`, `statusio`, `rss`, `json` e
+`probe`; hoje `statuspage`, `statusio`, `rss` e `json` estão implementados. As
+regiões são
+`global` mais códigos ISO 3166-1 alpha-2. O schema completo, as regras de
+validação e o checklist para adicionar um serviço estão em
+[docs/CATALOG.pt-br.md](docs/CATALOG.pt-br.md).
 
 ## Implantação
 
@@ -181,10 +204,10 @@ lefthook install
 
 ## Roadmap
 
-- **M1** — coletor `statuspage` e tratamento de erro por serviço.
+- **M1 (concluído)** — coletor `statuspage`, retentativas e erro por serviço.
 - **M2** — primeiro serviço brasileiro, exercitando regiões de ponta a ponta.
-- **M3** — coletor `probe` para serviços sem status page.
-- **M4** — catálogo completo (~50 serviços, Brasil + global).
+- **M3** — coletor `probe` para endpoints oficiais de saúde.
+- **M4** — ampliar o catálogo para ~50 serviços, Brasil + global.
 - **Depois** — histórico, PWA instalável com notificações.
 
 ## Licença

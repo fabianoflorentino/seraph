@@ -13,7 +13,7 @@ Design constraints:
 - **Zero infrastructure.** Static JSON on GitHub Pages, no server or database.
 - **Real freshness.** A snapshot every 5–20 minutes, driven by a reliable cron.
 - **Unlimited favorites.** Stored in the browser; no accounts, no tracking.
-- **Official signals first.** Status pages and direct HTTP probes only.
+- **Official signals first.** Official status pages and feeds only.
 - **Boring operations.** If GitHub is down, the last snapshot keeps serving.
 
 ## Components
@@ -42,7 +42,7 @@ Design constraints:
 | Catalog          | `internal/catalog`           | Load, validate, and merge YAML packs.            |
 | State            | `internal/state`             | Snapshot schema, atomic JSON writes, reads.      |
 | Config           | `internal/config`            | File + `SERAPH_*` environment + flag precedence. |
-| Collectors       | planned (`internal/collector`) | Status pages and probes (roadmap).             |
+| Collectors       | `internal/collector`         | Statuspage, status.io, JSON, and RSS observations. |
 | Site             | `site/`                      | Hugo site: dashboard, i18n, favorites.           |
 | Dispatcher       | `cloudflare/`                | Reliable five-minute cron → `workflow_dispatch`. |
 | CI/CD            | `.github/workflows/`          | Lint, tests, coverage, build, Pages deploy.      |
@@ -52,8 +52,9 @@ Design constraints:
 1. The Cloudflare Worker fires every five minutes and calls the GitHub API to
    dispatch `dashboard.yml` (also runnable manually or on push).
 2. The workflow builds the CLI, validates the catalog, and runs `seraph sync`.
-3. `sync` loads every pack under `catalog/packs`, resolves each service's
-   source, collects observations, and builds a snapshot.
+3. `sync` loads every pack under `catalog/packs` and `internal/collector`
+   observes each service concurrently with bounded concurrency, per-attempt
+   timeouts, and retries for transient failures.
 4. The snapshot is written atomically to `site/static/data/state.json`.
 5. Hugo renders `site/` into `site/public`, which is uploaded as the Pages
    artifact and deployed.
@@ -68,6 +69,7 @@ Design constraints:
 | `internal/cmd`       | `version`, `sync`, `validate`; shared config/logger helpers. |
 | `internal/config`    | Typed configuration with validation and env overrides.       |
 | `internal/catalog`   | Catalog types, validation rules, pack loading.               |
+| `internal/collector` | Statuspage client, retries, concurrency, status mapping.     |
 | `internal/state`     | Snapshot types, atomic persistence, schema version guard.    |
 | `internal/version`   | Build metadata injected with `-ldflags`.                     |
 | `catalog/packs`      | YAML service definitions grouped by audience/region.         |
@@ -76,8 +78,8 @@ Design constraints:
 | `cloudflare`         | Cron dispatcher Worker.                                      |
 
 Dependencies are injected through constructors; there is no package-level
-mutable state. Collectors will accept an `*http.Client` and a clock so tests can
-run without the network.
+mutable state. Collectors accept an `*http.Client` and a clock so tests run
+without the network.
 
 ## Local development
 
@@ -92,8 +94,10 @@ deploying. Details and overrides: [DEVELOPMENT.md](DEVELOPMENT.md).
 `schema_version` is independent from the application version. Breaking changes
 bump it; readers reject unknown versions with `ErrUnsupportedSchema`. Each
 service carries status, region membership, observation time, optional latency,
-optional error, and a short history series. The dashboard treats every field as
-optional except `slug`, `name`, `category`, `regions`, and `status`.
+optional error, optional `official_url` and `status_url`, and a short history
+series. The dashboard links cards to `status_url` when present, falling back to
+`official_url`. It treats every field as optional except `slug`, `name`,
+`category`, `regions`, and `status`.
 
 Favorites are deliberately **not** in the snapshot. They live in
 `localStorage` under `seraph.*.v1` keys, so the published artifact stays
@@ -113,7 +117,7 @@ anonymous and cacheable.
 
 ## Roadmap
 
-1. `internal/collector`: statuspage, status.io, RSS, and probe implementations.
+1. `internal/collector`: status.io, RSS, and probe implementations.
 2. History retention across runs (merge previous `state.json`).
 3. PWA install with local notifications for favorites.
 4. Per-region latency comparisons (multiple probe locations).

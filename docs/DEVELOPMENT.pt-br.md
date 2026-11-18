@@ -86,8 +86,14 @@ make dev/collect     # roda um ciclo imediatamente
 
 ```bash
 make site-build      # build do Hugo em site/public
-make preview         # compila e serve em http://localhost:8000
+make preview         # compila, sobe em segundo plano e imprime a URL
+make preview/logs    # acompanha requisições e erros
+make preview/status  # confere se o servidor está rodando
+make preview/stop    # para o servidor
 ```
+
+`make preview` retorna imediatamente e grava em `.preview/server.log`. Use outra
+porta com `PREVIEW_PORT=8080 make preview`.
 
 `make site-build` usa a mesma imagem Hugo da CI, então erros de template
 aparecem localmente.

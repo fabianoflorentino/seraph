@@ -86,8 +86,14 @@ make dev/collect     # run one cycle immediately
 
 ```bash
 make site-build      # Hugo build into site/public
-make preview         # build, then serve on http://localhost:8000
+make preview         # build, start in the background, print the URL
+make preview/logs    # follow requests and errors
+make preview/status  # check whether the server is running
+make preview/stop    # stop the server
 ```
+
+`make preview` returns immediately and writes to `.preview/server.log`. Pick
+another port with `PREVIEW_PORT=8080 make preview`.
 
 `make site-build` uses the same Hugo image as CI, so template errors surface
 locally.

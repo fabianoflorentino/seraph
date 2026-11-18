@@ -15,6 +15,7 @@ services:
     name: GitHub
     category: cloud
     official_url: https://github.com
+    status_url: https://www.githubstatus.com
     regions:
       global: primary
     source:
@@ -36,7 +37,8 @@ services:
 | `slug`         | yes      | Lower-kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`), unique across all packs. |
 | `name`         | yes      | Display name, 1–80 characters.                                        |
 | `category`     | yes      | One of the categories below.                                          |
-| `official_url` | no       | Absolute HTTPS URL, shown as the card link.                           |
+| `official_url` | no       | Absolute HTTPS URL for the official site; fallback card link.         |
+| `status_url`   | no       | Absolute HTTPS URL for the status page; used as the card link.        |
 | `regions`      | yes      | Map of region code → level. At least one entry, at least one `primary`. |
 | `source`       | yes      | Observation endpoint; see below.                                      |
 
@@ -45,8 +47,8 @@ Unknown fields are rejected (`KnownFields(true)`), which catches typos such as
 
 ## Categories
 
-`banking`, `payments`, `telecom`, `messaging`, `social`, `cloud`, `streaming`,
-`gaming`, `transport`, `ecommerce`, `gov`.
+`banking`, `payments`, `telecom`, `messaging`, `social`, `ai`, `cloud`,
+`streaming`, `gaming`, `transport`, `ecommerce`, `gov`.
 
 The dashboard groups services by category in that order. Adding a category
 requires code changes in `internal/catalog` and `site/i18n/*.js`.
@@ -74,22 +76,32 @@ regions:
 ```
 
 Region buttons in the dashboard are derived from the snapshot, so adding a new
-ISO code to a pack is enough to make it selectable. Localized names for `global`
-and `BR` come from the i18n files; other codes use `Intl.DisplayNames`.
+ISO code to a pack is enough to make it selectable. The filter is hidden while
+only one region exists. Localized names for `global` and `BR` come from the i18n
+files; other codes use `Intl.DisplayNames`.
 
 ## Sources
 
+`statuspage`, `statusio`, `rss`, and `json` are implemented. `probe` passes
+schema validation but stays `unknown` with a "not implemented" error until its
+collector lands.
+
 | Type         | Reads                                             | Status mapping                                                     |
 | ------------ | ------------------------------------------------- | ------------------------------------------------------------------ |
-| `statuspage` | Atlassian Statuspage `summary.json`               | `none` → operational; `minor` → degraded; `major`/`critical` → major. |
-| `statusio`   | status.io status document                          | Component status and incident severity.                            |
-| `rss`        | Incident feed                                     | Active incident → degraded; unreachable feed → unknown.            |
-| `probe`      | Direct HTTPS request to `url`                      | 2xx → operational; other/error → degraded or unknown.              |
+| `statuspage` | Atlassian Statuspage `summary.json`               | `none` → operational; `minor` → degraded; `major`/`critical` → major; `maintenance` → degraded. |
+| `statusio`   | status.io status document                          | `100` → operational; `200`/`300`/`400`/`600` → degraded; `500` → major. |
+| `rss`        | Incident feed                                      | Empty feed → operational; any item → degraded.                      |
+| `json`       | Service-specific JSON (`format` required)          | `slack` or `stripe`; see below.                                     |
+| `probe`      | Direct HTTPS request to `url` (planned)           | 2xx → operational; other/error → degraded or unknown.              |
 
 ### `statuspage`
 
-Atlassian Statuspage exposes `https://<host>/api/v2/summary.json`. Optional
-`component` scopes the status to one component name:
+Atlassian Statuspage exposes `https://<host>/api/v2/summary.json`. incident.io
+status pages serve the same payload, so they use this source type as well.
+Optional `component` scopes the status to one component name. Component states map as:
+`operational` → operational; `degraded_performance`, `partial_outage`, and
+`under_maintenance` → degraded; `major_outage` → major. A missing component or
+an unrecognized state yields `unknown` with an error note.
 
 ```yaml
 source:
@@ -110,16 +122,43 @@ source:
 
 ### `rss`
 
+An empty feed means operational; any item means degraded. Use only feeds that
+publish current incidents, not history.
+
 ```yaml
 source:
   type: rss
-  url: https://status.example.com/history.rss
+  url: https://status.example.com/feed/
 ```
+
+### `json`
+
+Service-specific JSON documents. `format` is required and currently supports
+`slack`, `stripe`, `aws`, and `gcp`.
+
+```yaml
+source:
+  type: json
+  format: slack
+  url: https://status.slack.com/api/v2.0.0/current
+```
+
+- `slack`: `status: ok` with no active incidents → operational; active
+  incidents or `notice`/`degraded` → degraded; `critical`/`major`/`outage` →
+  major.
+- `stripe`: `largestatus` `up` → operational; `degraded` → degraded;
+  `down`/`outage` → major. Without `largestatus`, the worst service status wins.
+- `aws`: reads the UTF-16 `data.json` event feed; resolved events are ignored,
+  and open/in-progress events (`1`/`2`) mark the service degraded.
+- `gcp`: reads `incidents.json`; an incident without `end` or with a future
+  `end` marks the service degraded.
 
 ### `probe`
 
-A probe is the fallback when no official status page exists. It is intentionally
-shallow: DNS, TLS, HTTP status, and latency.
+A probe is the fallback when a service exposes an official health endpoint but
+no status page. It is intentionally shallow: DNS, TLS, HTTP status, and latency.
+When implemented, use it only for an official health endpoint, never for a
+marketing home page.
 
 ```yaml
 source:
@@ -138,7 +177,9 @@ source:
 - Region codes: `global` or two uppercase letters.
 - Valid levels, and at least one `primary` region.
 - Known source type.
-- Absolute HTTPS URLs for `source.url` and `official_url`.
+- Absolute HTTPS URLs for `source.url`, `official_url`, and `status_url`.
+- `source.format` required for `json`; `slack`, `stripe`, `aws`, and `gcp` are
+  accepted.
 
 Errors are aggregated: a single run reports every problem with file, slug, and
 field. Example:
@@ -151,8 +192,18 @@ br.yaml: nubank.category: unsupported category "fintech"
 
 1. Pick the pack: `global.yaml` for worldwide services, a region pack such as
    `br.yaml` for local ones.
-2. Prefer an official status page. Use `probe` only when none exists.
-3. Add the entry with a stable, human-readable slug.
+2. Prefer an official status page or feed. Use the adapter that matches the
+   provider; never scrape HTML or a marketing page.
+3. Add the entry with a stable, human-readable slug:
+
+   ```bash
+   make catalog-add CATALOG_PACK=catalog/packs/global.yaml CATALOG_SLUG=example \
+     CATALOG_NAME=Example CATALOG_CATEGORY=cloud \
+     CATALOG_STATUS_URL=https://status.example.com CATALOG_SOURCE_TYPE=statuspage \
+     CATALOG_SOURCE_URL=https://status.example.com/api/v2/summary.json
+   ```
+
+   The command validates every pack and leaves the file untouched on error.
 4. Run `go run ./cmd/seraph validate --catalog catalog/packs`.
 5. Run `go run ./cmd/seraph sync --catalog catalog/packs`, then
    `make preview` and check the card.
