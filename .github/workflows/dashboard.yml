@@ -45,9 +45,15 @@ jobs:
         run: ./bin/seraph validate --catalog catalog/packs
       - name: Collect snapshot
         run: ./bin/seraph sync --catalog catalog/packs
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.158.0"
+      - name: Build site
+        run: hugo --source site --minify --gc --cleanDestinationDir
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: site
+          path: site/public
 
   deploy:
     name: Deploy to Pages

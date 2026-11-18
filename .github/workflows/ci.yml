@@ -64,6 +64,12 @@ jobs:
         run: go build ./...
       - name: Validate catalog
         run: go run ./cmd/seraph validate --catalog catalog/packs
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.158.0"
+      - name: Build site
+        run: hugo --source site --minify --gc --cleanDestinationDir
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: Run govulncheck
