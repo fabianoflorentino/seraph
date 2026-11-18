@@ -28,7 +28,7 @@ Design constraints:
                  │ seraph CLI                                    │
                  │ catalog.Load → collect → state.WriteAtomic    │
                  └──────────────────────────────┬────────────────┘
-                                                │ site/data/state.json
+                                                │ site/static/data/state.json
                                                 ▼
                                       ┌───────────────────┐
                                       │ GitHub Pages      │
@@ -43,7 +43,7 @@ Design constraints:
 | State            | `internal/state`             | Snapshot schema, atomic JSON writes, reads.      |
 | Config           | `internal/config`            | File + `SERAPH_*` environment + flag precedence. |
 | Collectors       | planned (`internal/collector`) | Status pages and probes (roadmap).             |
-| Site             | `site/`                      | Static dashboard, i18n, favorites.               |
+| Site             | `site/`                      | Hugo site: dashboard, i18n, favorites.           |
 | Dispatcher       | `cloudflare/`                | Reliable five-minute cron → `workflow_dispatch`. |
 | CI/CD            | `.github/workflows/`          | Lint, tests, coverage, build, Pages deploy.      |
 
@@ -54,8 +54,9 @@ Design constraints:
 2. The workflow builds the CLI, validates the catalog, and runs `seraph sync`.
 3. `sync` loads every pack under `catalog/packs`, resolves each service's
    source, collects observations, and builds a snapshot.
-4. The snapshot is written atomically to `site/data/state.json`.
-5. The whole `site/` directory is uploaded as the Pages artifact and deployed.
+4. The snapshot is written atomically to `site/static/data/state.json`.
+5. Hugo renders `site/` into `site/public`, which is uploaded as the Pages
+   artifact and deployed.
 6. The browser fetches `data/state.json` with a cache-busting query, merges it
    with local favorites, and renders the board in English or Portuguese.
 
@@ -71,12 +72,20 @@ Design constraints:
 | `internal/version`   | Build metadata injected with `-ldflags`.                     |
 | `catalog/packs`      | YAML service definitions grouped by audience/region.         |
 | `config`             | Default `seraph.yml`.                                        |
-| `site`               | Static dashboard (no build step).                            |
+| `site`               | Hugo site: layouts, static assets, i18n, snapshot.            |
 | `cloudflare`         | Cron dispatcher Worker.                                      |
 
 Dependencies are injected through constructors; there is no package-level
 mutable state. Collectors will accept an `*http.Client` and a clock so tests can
 run without the network.
+
+## Local development
+
+`docker-compose.yml` runs two services. `site` starts the pinned Hugo image in
+server mode on <http://localhost:1314> with live reload, mounting `site/`.
+`collector` builds `Dockerfile.dev`, then validates and syncs every minute into
+the mounted `site/static/data`, so the dashboard shows the full loop without
+deploying. Details and overrides: [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Snapshot contract
 

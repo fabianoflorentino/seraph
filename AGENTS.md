@@ -61,7 +61,7 @@ parallel and need an explaining `//nolint:paralleltest` directive.
 1. **Official signals only.** Never scrape Downdetector or similar aggregators.
    Use status pages, status APIs, incident feeds, or direct probes.
 2. **Static snapshot, no database.** The only runtime artifact is
-   `site/data/state.json`, written atomically. History arrives by merging the
+   `site/static/data/state.json`, written atomically. History arrives by merging the
    previous snapshot, never by adding storage.
 3. **Favorites are client-side.** They stay in `localStorage` under versioned
    `seraph.*.v1` keys. Never send them to a server or add an account system.
@@ -107,6 +107,8 @@ lefthook run pre-push
 - `docs/ARCHITECTURE.md` — components, data flow, snapshot contract.
 - `docs/CATALOG.md` — schema, enums, sources, validation, adding services.
 - `docs/OPERATIONS.md` — deployment, scheduling, monitoring, troubleshooting.
+- `docs/DEVELOPMENT.md` — Docker Compose stack, Hugo live reload, ports, and
+  local troubleshooting.
 - `CHANGELOG.md` — user-visible changes (Keep a Changelog).
 - `cloudflare/README.md` — Worker deployment and secrets.
 
@@ -114,6 +116,6 @@ lefthook run pre-push
 
 - Commit small, thematic, English messages. Never commit or push unless
   explicitly asked.
-- Keep the generated snapshot out of commits (`site/data/*.json` is ignored); CI
+- Keep the generated snapshot out of commits (`site/static/data/*.json` is ignored); CI
   publishes it.
 - Update `CHANGELOG.md` for user-visible behavior.

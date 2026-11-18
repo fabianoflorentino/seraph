@@ -40,7 +40,7 @@ so the full pipeline can be exercised end to end.
 ## How it works
 
 ```
-Cloudflare cron (*/5) ──▶ GitHub Actions ──▶ seraph sync ──▶ site/data/state.json
+Cloudflare cron (*/5) ──▶ GitHub Actions ──▶ seraph sync ──▶ site/static/data/state.json
                                                                   │
                                                            GitHub Pages
                                                                   │
@@ -59,23 +59,39 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Quickstart
 
-Requirements: Go 1.27+, `make`, and Python 3 (for the local preview server).
+Requirements: Docker with Compose v2 and `make`. Go 1.27+ is only needed to run
+the CLI outside Docker.
+
+### Full local stack
 
 ```bash
 git clone https://github.com/fabianoflorentino/seraph.git
 cd seraph
 
-make validate   # check the catalog, no network
-make sync       # write site/data/state.json
-make preview    # http://localhost:8000
+make dev/up     # Hugo with live reload + collector loop
+# open http://localhost:1314
 ```
 
-Prefer plain Go?
+The site reloads as you edit, and a container refreshes the snapshot every
+minute. `make dev/logs` follows both services; `make dev/down` stops them. See
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for ports, overrides, and
+troubleshooting.
+
+### CLI only
+
+```bash
+make validate   # check the catalog, no network
+make sync       # write site/static/data/state.json
+make preview    # build the Hugo site and serve on http://localhost:8000
+```
+
+Prefer plain Go for the CLI?
 
 ```bash
 go run ./cmd/seraph validate --catalog catalog/packs
 go run ./cmd/seraph sync --catalog catalog/packs
-python3 -m http.server -d site 8000
+make site-build
+python3 -m http.server -d site/public 8000
 ```
 
 ## CLI
@@ -102,7 +118,7 @@ is **flag > environment > file > default**.
 
 | Key           | Env                  | Default     |
 | ------------- | -------------------- | ----------- |
-| `out_dir`     | `SERAPH_OUT_DIR`     | `site/data` |
+| `out_dir`     | `SERAPH_OUT_DIR`     | `site/static/data` |
 | `base_url`    | `SERAPH_BASE_URL`    | empty       |
 | `timeout`     | `SERAPH_TIMEOUT`     | `8s`        |
 | `concurrency` | `SERAPH_CONCURRENCY` | `12`        |
@@ -154,6 +170,10 @@ make lint       # golangci-lint
 lefthook install
 ```
 
+- Local stack: `make dev/up`, `dev/logs`, `dev/down`, `dev/rebuild`,
+  `dev/collect`, `dev/reset`; see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+- The site is a Hugo project under `site/`; `make site-build` renders
+  `site/public` with the same Hugo image used in CI.
 - Coverage floor: **80%** (enforced by lefthook and CI).
 - Code, identifiers, comments, and technical docs are in **English**; the site
   and user docs ship in English and Brazilian Portuguese.

@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - YAML catalog schema with pack loading, validation, and duplicate detection.
 - Snapshot schema with atomic writes and schema versioning.
 - Configuration file with `SERAPH_*` environment overrides.
-- Static bilingual dashboard (English and Brazilian Portuguese).
+- Static bilingual dashboard (English and Brazilian Portuguese), built with
+  Hugo.
+- Docker Compose development stack with Hugo live reload and a collector loop,
+  plus `dev/*` and site targets in the Makefile.
 - Cloudflare Worker dispatcher for scheduled GitHub Actions runs.
 - CI pipeline with lint, tests, coverage gate, build, and vulnerability scan.
 - Project tooling: Makefile, lefthook, golangci-lint, and Dependabot.

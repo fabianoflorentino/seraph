@@ -38,21 +38,25 @@
 ## Comandos locais
 
 ```bash
+make dev/up      # Hugo + coletor em http://localhost:1314
+make dev/logs    # acompanha os dois serviços
+make dev/down    # para o ambiente
 make build       # bin/seraph com metadados de versão
 make validate    # apenas validação do catálogo
-make sync        # grava site/data/state.json
-make preview     # http://localhost:8000
+make sync        # grava site/static/data/state.json
+make preview     # compila o Hugo e serve em http://localhost:8000
 make test        # race + shuffle
 make coverage    # cobertura total
 make check       # fmt, vet, lint, test, coverage
 ```
 
-Sem `make`:
+O ambiente completo está em [DEVELOPMENT.pt-br.md](DEVELOPMENT.pt-br.md). Sem `make`:
 
 ```bash
 go run ./cmd/seraph validate --catalog catalog/packs
 go run ./cmd/seraph sync --catalog catalog/packs
-python3 -m http.server -d site 8000
+docker compose run --rm --no-deps site hugo --minify --gc
+python3 -m http.server -d site/public 8000
 ```
 
 ## Configuração
@@ -62,7 +66,7 @@ existe. A precedência é **flag > ambiente > arquivo > padrão**.
 
 | Chave         | Env                  | Padrão      | Observações                     |
 | ------------- | -------------------- | ----------- | ------------------------------- |
-| `out_dir`     | `SERAPH_OUT_DIR`     | `site/data` | Diretório do `state.json`.      |
+| `out_dir`     | `SERAPH_OUT_DIR`     | `site/static/data` | Diretório do `state.json`.      |
 | `base_url`    | `SERAPH_BASE_URL`    | vazio       | URL pública HTTPS opcional.     |
 | `timeout`     | `SERAPH_TIMEOUT`     | `8s`        | Timeout por requisição, 1–60s.  |
 | `concurrency` | `SERAPH_CONCURRENCY` | `12`        | Coletas paralelas, 1–128.       |

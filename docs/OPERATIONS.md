@@ -36,21 +36,25 @@ English | [Português](OPERATIONS.pt-br.md)
 ## Local commands
 
 ```bash
+make dev/up      # Hugo + collector at http://localhost:1314
+make dev/logs    # follow both services
+make dev/down    # stop the stack
 make build       # bin/seraph with version metadata
 make validate    # catalog validation only
-make sync        # write site/data/state.json
-make preview     # http://localhost:8000
+make sync        # write site/static/data/state.json
+make preview     # build the Hugo site, serve http://localhost:8000
 make test        # race + shuffle
 make coverage    # total coverage
 make check       # fmt, vet, lint, test, coverage
 ```
 
-Without `make`:
+The full stack is documented in [DEVELOPMENT.md](DEVELOPMENT.md). Without `make`:
 
 ```bash
 go run ./cmd/seraph validate --catalog catalog/packs
 go run ./cmd/seraph sync --catalog catalog/packs
-python3 -m http.server -d site 8000
+docker compose run --rm --no-deps site hugo --minify --gc
+python3 -m http.server -d site/public 8000
 ```
 
 ## Configuration
@@ -60,7 +64,7 @@ Precedence is **flag > environment > file > default**.
 
 | Key           | Env                  | Default     | Notes                          |
 | ------------- | -------------------- | ----------- | ------------------------------ |
-| `out_dir`     | `SERAPH_OUT_DIR`     | `site/data` | Directory for `state.json`.    |
+| `out_dir`     | `SERAPH_OUT_DIR`     | `site/static/data` | Directory for `state.json`.    |
 | `base_url`    | `SERAPH_BASE_URL`    | empty       | Optional HTTPS public URL.     |
 | `timeout`     | `SERAPH_TIMEOUT`     | `8s`        | Per-request timeout, 1–60s.    |
 | `concurrency` | `SERAPH_CONCURRENCY` | `12`        | Parallel collections, 1–128.   |
