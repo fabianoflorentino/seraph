@@ -43,6 +43,16 @@ jobs:
             -o bin/seraph ./cmd/seraph
       - name: Validate catalog
         run: ./bin/seraph validate --catalog catalog/packs
+      - name: Restore previous snapshot
+        run: |
+          mkdir -p site/static/data
+          pages_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/data/state.json"
+          if curl -fsSL -H "Cache-Control: no-cache" "${pages_url}?ts=$(date +%s)" -o site/static/data/state.json; then
+            echo "restored previous snapshot for history"
+          else
+            rm -f site/static/data/state.json
+            echo "no previous snapshot; starting history fresh"
+          fi
       - name: Collect snapshot
         run: ./bin/seraph sync --catalog catalog/packs
       - name: Setup Hugo

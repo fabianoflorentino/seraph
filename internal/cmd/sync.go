@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -60,10 +62,16 @@ func newSyncCommand(opts *rootOptions) *cobra.Command {
 				sources.OK++
 			}
 
+			outPath := filepath.Join(cfg.OutDir, "state.json")
 			snapshot := state.NewSnapshot(time.Now(), services)
 			snapshot.Sources = sources
 
-			outPath := filepath.Join(cfg.OutDir, "state.json")
+			if previous, err := state.Read(outPath); err == nil {
+				snapshot.Services = state.MergeHistory(previous, snapshot.Services, state.DefaultHistoryLimit)
+			} else if !errors.Is(err, fs.ErrNotExist) {
+				logger.Warn("could not read previous snapshot", "error", err)
+			}
+
 			if err := state.WriteAtomic(outPath, snapshot); err != nil {
 				return err
 			}

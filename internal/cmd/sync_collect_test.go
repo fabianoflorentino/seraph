@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fabianoflorentino/seraph/internal/state"
 )
@@ -46,6 +47,21 @@ func TestSyncCollectsStatuspage(t *testing.T) {
 	}
 
 	outDir := filepath.Join(t.TempDir(), "out")
+	previousAt := time.Now().Add(-time.Hour).UTC()
+	previous := state.NewSnapshot(previousAt, []state.Service{{
+		Slug:       "github",
+		Name:       "GitHub",
+		Category:   "cloud",
+		Regions:    []string{"global"},
+		Status:     state.StatusOperational,
+		ObservedAt: &previousAt,
+		Points:     []state.Point{{At: previousAt, Status: state.StatusOperational}},
+	}})
+
+	if err := state.WriteAtomic(filepath.Join(outDir, "state.json"), previous); err != nil {
+		t.Fatalf("write previous snapshot: %v", err)
+	}
+
 	configPath := filepath.Join(t.TempDir(), "seraph.yml")
 	contents := fmt.Sprintf("out_dir: %q\nlog_level: error\nretries: 0\ntimeout: 2s\n", outDir)
 
@@ -95,8 +111,12 @@ func TestSyncCollectsStatuspage(t *testing.T) {
 		t.Error("ObservedAt is nil, want a timestamp")
 	}
 
-	if len(service.Points) != 1 {
-		t.Errorf("Points = %d, want 1", len(service.Points))
+	if len(service.Points) != 2 {
+		t.Errorf("Points = %d, want 2", len(service.Points))
+	}
+
+	if len(service.Points) > 0 && !service.Points[0].At.Equal(previousAt) {
+		t.Errorf("first point = %s, want %s", service.Points[0].At, previousAt)
 	}
 
 	if snap.Sources.OK != 1 || snap.Sources.Failed != 0 {

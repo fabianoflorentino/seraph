@@ -65,6 +65,46 @@ type Snapshot struct {
 	Services      []Service `json:"services"`
 }
 
+// DefaultHistoryLimit caps the number of points kept per service.
+const DefaultHistoryLimit = 288
+
+// MergeHistory appends current observations to the previous snapshot, caps the
+// history, and returns services in the same order as input.
+func MergeHistory(previous Snapshot, services []Service, limit int) []Service {
+	if limit <= 0 {
+		limit = DefaultHistoryLimit
+	}
+
+	history := make(map[string][]Point, len(previous.Services))
+	for _, service := range previous.Services {
+		history[service.Slug] = service.Points
+	}
+
+	merged := make([]Service, len(services))
+
+	for index, service := range services {
+		points := append([]Point(nil), history[service.Slug]...)
+		points = append(points, service.Points...)
+
+		if len(service.Points) == 0 && service.ObservedAt != nil {
+			points = append(points, Point{At: *service.ObservedAt, Status: service.Status})
+		}
+
+		sort.Slice(points, func(i, j int) bool {
+			return points[i].At.Before(points[j].At)
+		})
+
+		if len(points) > limit {
+			points = points[len(points)-limit:]
+		}
+
+		service.Points = points
+		merged[index] = service
+	}
+
+	return merged
+}
+
 // NewSnapshot builds a snapshot with services sorted by slug.
 func NewSnapshot(now time.Time, services []Service) Snapshot {
 	sorted := make([]Service, len(services))

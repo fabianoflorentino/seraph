@@ -37,6 +37,84 @@ func TestNewSnapshotSortsAndNormalizesTime(t *testing.T) {
 	}
 }
 
+func TestMergeHistoryAppendsAndSorts(t *testing.T) {
+	t.Parallel()
+
+	first := time.Date(2026, 11, 18, 10, 0, 0, 0, time.UTC)
+	second := first.Add(5 * time.Minute)
+	third := second.Add(5 * time.Minute)
+
+	previous := state.Snapshot{Services: []state.Service{{
+		Slug: "github",
+		Points: []state.Point{
+			{At: third, Status: state.StatusOperational},
+			{At: first, Status: state.StatusOperational},
+		},
+	}}}
+
+	services := []state.Service{{Slug: "github", Points: []state.Point{{At: second, Status: state.StatusDegraded}}}}
+	merged := state.MergeHistory(previous, services, 10)
+
+	if len(merged) != 1 {
+		t.Fatalf("services = %d, want 1", len(merged))
+	}
+
+	if len(merged[0].Points) != 3 {
+		t.Fatalf("points = %d, want 3", len(merged[0].Points))
+	}
+
+	for index, want := range []time.Time{first, second, third} {
+		if !merged[0].Points[index].At.Equal(want) {
+			t.Errorf("point %d = %s, want %s", index, merged[0].Points[index].At, want)
+		}
+	}
+}
+
+func TestMergeHistoryRecordsUnknownFailures(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 18, 12, 0, 0, 0, time.UTC)
+	services := []state.Service{{
+		Slug:       "github",
+		Status:     state.StatusUnknown,
+		ObservedAt: &now,
+	}}
+
+	merged := state.MergeHistory(state.Snapshot{}, services, 10)
+
+	if len(merged[0].Points) != 1 {
+		t.Fatalf("points = %d, want 1", len(merged[0].Points))
+	}
+
+	if merged[0].Points[0].Status != state.StatusUnknown {
+		t.Errorf("status = %q, want unknown", merged[0].Points[0].Status)
+	}
+}
+
+func TestMergeHistoryCapsPoints(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 18, 12, 0, 0, 0, time.UTC)
+	previous := state.Snapshot{Services: []state.Service{{
+		Slug: "github",
+		Points: []state.Point{
+			{At: now.Add(-2 * time.Minute), Status: state.StatusOperational},
+			{At: now.Add(-time.Minute), Status: state.StatusOperational},
+		},
+	}}}
+
+	services := []state.Service{{Slug: "github", Points: []state.Point{{At: now, Status: state.StatusOperational}}}}
+	merged := state.MergeHistory(previous, services, 2)
+
+	if len(merged[0].Points) != 2 {
+		t.Fatalf("points = %d, want 2", len(merged[0].Points))
+	}
+
+	if !merged[0].Points[1].At.Equal(now) {
+		t.Errorf("last point = %s, want %s", merged[0].Points[1].At, now)
+	}
+}
+
 func TestNewSnapshotEmpty(t *testing.T) {
 	t.Parallel()
 
