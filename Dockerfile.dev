@@ -1,5 +1,5 @@
 # Development image for the collector loop used by docker compose.
-FROM golang:1.27-alpine AS build
+FROM golang:1.27.4-alpine AS build
 
 WORKDIR /src
 
