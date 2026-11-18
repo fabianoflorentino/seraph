@@ -47,7 +47,7 @@ Favorites live in the browser, so no account or database is required.`,
 
 	cmd.AddCommand(
 		newVersionCommand(),
-		newCatalogCommand(),
+		newCatalogCommand(opts),
 		newSyncCommand(opts),
 		newValidateCommand(opts),
 	)

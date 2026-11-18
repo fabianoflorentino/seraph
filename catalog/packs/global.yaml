@@ -244,3 +244,193 @@ services:
       type: json
       url: https://status.cloud.google.com/incidents.json
       format: gcp
+  - slug: atlassian
+    name: Atlassian
+    category: cloud
+    official_url: https://www.atlassian.com
+    status_url: https://status.atlassian.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.atlassian.com/api/v2/summary.json
+  - slug: zoom
+    name: Zoom
+    category: messaging
+    official_url: https://zoom.us
+    status_url: https://www.zoomstatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.zoom.us/api/v2/summary.json
+  - slug: dropbox
+    name: Dropbox
+    category: cloud
+    official_url: https://www.dropbox.com
+    status_url: https://status.dropbox.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.dropbox.com/api/v2/summary.json
+  - slug: mongodb-atlas
+    name: MongoDB Atlas
+    category: cloud
+    official_url: https://www.mongodb.com
+    status_url: https://status.mongodb.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.mongodb.com/api/v2/summary.json
+  - slug: figma
+    name: Figma
+    category: cloud
+    official_url: https://www.figma.com
+    status_url: https://status.figma.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.figma.com/api/v2/summary.json
+  - slug: canva
+    name: Canva
+    category: cloud
+    official_url: https://www.canva.com
+    status_url: https://www.canvastatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://www.canvastatus.com/api/v2/summary.json
+  - slug: linear
+    name: Linear
+    category: cloud
+    official_url: https://linear.app
+    status_url: https://linearstatus.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://linearstatus.com/api/v2/summary.json
+  - slug: clerk
+    name: Clerk
+    category: cloud
+    official_url: https://clerk.com
+    status_url: https://status.clerk.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.clerk.com/api/v2/summary.json
+  - slug: twilio
+    name: Twilio
+    category: messaging
+    official_url: https://www.twilio.com
+    status_url: https://status.twilio.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.twilio.com/api/v2/summary.json
+  - slug: new-relic
+    name: New Relic
+    category: cloud
+    official_url: https://newrelic.com
+    status_url: https://status.newrelic.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.newrelic.com/api/v2/summary.json
+  - slug: circleci
+    name: CircleCI
+    category: cloud
+    official_url: https://circleci.com
+    status_url: https://status.circleci.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.circleci.com/api/v2/summary.json
+  - slug: grafana-cloud
+    name: Grafana Cloud
+    category: cloud
+    official_url: https://grafana.com
+    status_url: https://status.grafana.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.grafana.com/api/v2/summary.json
+  - slug: hashicorp
+    name: HashiCorp
+    category: cloud
+    official_url: https://www.hashicorp.com
+    status_url: https://status.hashicorp.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.hashicorp.com/api/v2/summary.json
+  - slug: elastic-cloud
+    name: Elastic Cloud
+    category: cloud
+    official_url: https://www.elastic.co
+    status_url: https://status.elastic.co
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.elastic.co/api/v2/summary.json
+  - slug: snowflake
+    name: Snowflake
+    category: cloud
+    official_url: https://www.snowflake.com
+    status_url: https://status.snowflake.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.snowflake.com/api/v2/summary.json
+  - slug: render
+    name: Render
+    category: cloud
+    official_url: https://render.com
+    status_url: https://status.render.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.render.com/api/v2/summary.json
+  - slug: launchdarkly
+    name: LaunchDarkly
+    category: cloud
+    official_url: https://launchdarkly.com
+    status_url: https://status.launchdarkly.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.launchdarkly.com/api/v2/summary.json
+  - slug: segment
+    name: Segment
+    category: cloud
+    official_url: https://segment.com
+    status_url: https://status.segment.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://segment.statuspage.io/api/v2/summary.json
+  - slug: hubspot
+    name: HubSpot
+    category: cloud
+    official_url: https://www.hubspot.com
+    status_url: https://status.hubspot.com
+    regions:
+      global: primary
+    source:
+      type: statuspage
+      url: https://status.hubspot.com/api/v2/summary.json

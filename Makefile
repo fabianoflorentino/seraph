@@ -13,6 +13,9 @@ CATALOG_SOURCE_URL?=
 CATALOG_COMPONENT?=
 CATALOG_FORMAT?=
 CATALOG_REGION?=global
+CATALOG_TARGET?=
+CATALOG_INSPECT_ARGS?=
+CATALOG_AUDIT_ARGS?=
 CATALOG_OPTIONS=$(if $(CATALOG_OFFICIAL_URL),--official-url "$(CATALOG_OFFICIAL_URL)",) $(if $(CATALOG_STATUS_URL),--status-url "$(CATALOG_STATUS_URL)",) $(if $(CATALOG_COMPONENT),--component "$(CATALOG_COMPONENT)",) $(if $(CATALOG_FORMAT),--format "$(CATALOG_FORMAT)",)
 DOCKER_COMPOSE?=docker compose
 DEV_INTERVAL?=60
@@ -28,7 +31,8 @@ COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo none)
 DATE?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS=-ldflags "-X github.com/fabianoflorentino/seraph/internal/version.Version=$(VERSION) -X github.com/fabianoflorentino/seraph/internal/version.Commit=$(COMMIT) -X github.com/fabianoflorentino/seraph/internal/version.Date=$(DATE)"
 
-.PHONY: all build clean test coverage lint lint-fix fmt vet run sync validate catalog-add site-build \
+.PHONY: all build clean test coverage lint lint-fix fmt vet run sync validate catalog-add \
+	catalog-inspect catalog-audit site-build \
 	preview preview/logs preview/status preview/stop check \
 	dev/up dev/down dev/logs dev/ps dev/shell dev/collect dev/rebuild dev/reset help
 
@@ -104,6 +108,18 @@ catalog-add: build
 		--source-url "$(CATALOG_SOURCE_URL)" \
 		--region "$(CATALOG_REGION)" \
 		$(CATALOG_OPTIONS)
+
+## catalog-inspect: Discover status sources (CATALOG_TARGET=example.com)
+catalog-inspect: build
+	@if [ -z "$(CATALOG_TARGET)" ]; then \
+		echo "usage: make catalog-inspect CATALOG_TARGET=example.com [CATALOG_INSPECT_ARGS='--json']" >&2; \
+		exit 1; \
+	fi
+	./bin/$(BINARY_NAME) catalog inspect "$(CATALOG_TARGET)" $(CATALOG_INSPECT_ARGS)
+
+## catalog-audit: Collect and report every catalog source
+catalog-audit: build
+	./bin/$(BINARY_NAME) catalog audit $(CATALOG_AUDIT_ARGS)
 
 ## check: Run the full local gate (fmt, vet, lint, test, coverage)
 check: fmt lint test coverage

@@ -8,13 +8,17 @@ import (
 	"github.com/fabianoflorentino/seraph/internal/catalog"
 )
 
-func newCatalogCommand() *cobra.Command {
+func newCatalogCommand(opts *rootOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "catalog",
 		Short: "Manage the service catalog",
 	}
 
-	cmd.AddCommand(newCatalogAddCommand())
+	cmd.AddCommand(
+		newCatalogAddCommand(),
+		newCatalogInspectCommand(opts),
+		newCatalogAuditCommand(opts),
+	)
 
 	return cmd
 }
