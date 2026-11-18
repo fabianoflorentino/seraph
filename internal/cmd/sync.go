@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/fabianoflorentino/seraph/internal/catalog"
+	"github.com/fabianoflorentino/seraph/internal/collector"
 	"github.com/fabianoflorentino/seraph/internal/state"
 )
 
@@ -37,27 +38,43 @@ func newSyncCommand(opts *rootOptions) *cobra.Command {
 				return err
 			}
 
-			services := make([]state.Service, 0, len(cat.Services))
-			for _, entry := range cat.Services {
-				services = append(services, state.Service{
-					Slug:        entry.Slug,
-					Name:        entry.Name,
-					Category:    string(entry.Category),
-					OfficialURL: entry.OfficialURL,
-					Regions:     entry.RegionList(),
-					Status:      state.StatusUnknown,
-				})
+			observer := collector.New(
+				opts.httpClient,
+				collector.WithConcurrency(cfg.Concurrency),
+				collector.WithRetries(cfg.Retries),
+				collector.WithTimeout(cfg.Timeout.Duration()),
+			)
+
+			services := observer.Collect(cmd.Context(), cat.Services)
+
+			var sources state.Sources
+
+			for _, service := range services {
+				if service.Error != "" {
+					sources.Failed++
+					logger.Warn("service collection failed", "service", service.Slug, "error", service.Error)
+
+					continue
+				}
+
+				sources.OK++
 			}
 
 			snapshot := state.NewSnapshot(time.Now(), services)
-			snapshot.Sources = state.Sources{Failed: len(services)}
+			snapshot.Sources = sources
 
 			outPath := filepath.Join(cfg.OutDir, "state.json")
 			if err := state.WriteAtomic(outPath, snapshot); err != nil {
 				return err
 			}
 
-			logger.Info("snapshot written", "path", outPath, "services", len(services))
+			logger.Info(
+				"snapshot written",
+				"path", outPath,
+				"services", len(services),
+				"ok", sources.OK,
+				"failed", sources.Failed,
+			)
 
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "wrote %s with %d services\n", outPath, len(services))
 

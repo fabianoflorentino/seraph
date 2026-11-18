@@ -56,7 +56,7 @@ func writeConfig(t *testing.T, outDir string) string {
 	t.Helper()
 
 	path := filepath.Join(t.TempDir(), "seraph.yml")
-	contents := fmt.Sprintf("out_dir: %q\nlog_level: error\n", outDir)
+	contents := fmt.Sprintf("out_dir: %q\nlog_level: error\nretries: 0\ntimeout: 1s\n", outDir)
 
 	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 		t.Fatalf("write config: %v", err)
@@ -119,7 +119,12 @@ func TestValidateCommandRejectsInvalidLogLevel(t *testing.T) {
 func TestSyncCommandWritesSnapshot(t *testing.T) {
 	t.Parallel()
 
-	packDir := writePack(t, packYAML)
+	packDir := writePack(t, strings.Replace(
+		packYAML,
+		"https://www.githubstatus.com/api/v2/summary.json",
+		"https://127.0.0.1:1/summary.json",
+		1,
+	))
 	outDir := filepath.Join(t.TempDir(), "out")
 	configPath := writeConfig(t, outDir)
 
@@ -143,6 +148,14 @@ func TestSyncCommandWritesSnapshot(t *testing.T) {
 
 	if snap.Services[0].Status != state.StatusUnknown {
 		t.Errorf("Status = %q, want unknown", snap.Services[0].Status)
+	}
+
+	if snap.Services[0].Error == "" {
+		t.Error("Error is empty, want a collection error")
+	}
+
+	if snap.Sources.OK != 0 || snap.Sources.Failed != 1 {
+		t.Errorf("Sources = %+v, want 0 ok and 1 failed", snap.Sources)
 	}
 }
 

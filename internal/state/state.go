@@ -42,6 +42,7 @@ type Service struct {
 	Name        string     `json:"name"`
 	Category    string     `json:"category"`
 	OfficialURL string     `json:"official_url,omitempty"`
+	StatusURL   string     `json:"status_url,omitempty"`
 	Regions     []string   `json:"regions"`
 	Status      Status     `json:"status"`
 	ObservedAt  *time.Time `json:"observed_at,omitempty"`

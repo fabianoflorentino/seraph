@@ -58,12 +58,13 @@ func TestWriteAndReadRoundTrip(t *testing.T) {
 
 	input := state.NewSnapshot(now, []state.Service{
 		{
-			Slug:     "github",
-			Name:     "GitHub",
-			Category: "cloud",
-			Regions:  []string{"global"},
-			Status:   state.StatusOperational,
-			Points:   []state.Point{{At: now, Status: state.StatusOperational}},
+			Slug:      "github",
+			Name:      "GitHub",
+			Category:  "cloud",
+			StatusURL: "https://www.githubstatus.com",
+			Regions:   []string{"global"},
+			Status:    state.StatusOperational,
+			Points:    []state.Point{{At: now, Status: state.StatusOperational}},
 		},
 	})
 	input.Sources = state.Sources{OK: 1}
@@ -83,6 +84,10 @@ func TestWriteAndReadRoundTrip(t *testing.T) {
 
 	if len(output.Services) != 1 || output.Services[0].Slug != "github" {
 		t.Fatalf("services = %+v, want github", output.Services)
+	}
+
+	if output.Services[0].StatusURL != "https://www.githubstatus.com" {
+		t.Errorf("StatusURL = %q, want status page", output.Services[0].StatusURL)
 	}
 
 	if output.Sources.OK != 1 {
