@@ -50,7 +50,7 @@ jobs:
             echo "::warning::Docker Hub secrets are not configured; image publish skipped."
           fi
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Log in to Docker Hub
         if: steps.creds.outputs.publish == 'true'
