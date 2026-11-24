@@ -62,7 +62,7 @@ jobs:
       - name: Image metadata
         id: meta
         if: steps.creds.outputs.publish == 'true'
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: fabianoflorentino/seraph
           tags: |
