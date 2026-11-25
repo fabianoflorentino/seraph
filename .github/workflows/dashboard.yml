@@ -71,7 +71,88 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://seraph.fabianoflorentino.dev/
     steps:
-      - id: deployment
+      # Pages creation can return a transient 5xx. Retry with exponential
+      # backoff starting at 1 min, doubling up to 1 h; the final attempt
+      # failing marks the job failed so the outage is visible.
+      - name: Deploy to Pages (attempt 1)
+        id: deploy1
         uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 1m before retry
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 60
+
+      - name: Deploy to Pages (attempt 2)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 2m before retry
+        if: steps.deploy2.outcome == 'failure'
+        run: sleep 120
+
+      - name: Deploy to Pages (attempt 3)
+        id: deploy3
+        if: steps.deploy2.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 4m before retry
+        if: steps.deploy3.outcome == 'failure'
+        run: sleep 240
+
+      - name: Deploy to Pages (attempt 4)
+        id: deploy4
+        if: steps.deploy3.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 8m before retry
+        if: steps.deploy4.outcome == 'failure'
+        run: sleep 480
+
+      - name: Deploy to Pages (attempt 5)
+        id: deploy5
+        if: steps.deploy4.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 16m before retry
+        if: steps.deploy5.outcome == 'failure'
+        run: sleep 960
+
+      - name: Deploy to Pages (attempt 6)
+        id: deploy6
+        if: steps.deploy5.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 32m before retry
+        if: steps.deploy6.outcome == 'failure'
+        run: sleep 1920
+
+      - name: Deploy to Pages (attempt 7)
+        id: deploy7
+        if: steps.deploy6.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Wait 60m before final retry
+        if: steps.deploy7.outcome == 'failure'
+        run: sleep 3600
+
+      - name: Deploy to Pages (final attempt)
+        id: deploy8
+        if: steps.deploy7.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Fail after exhausting retries
+        if: steps.deploy8.outcome == 'failure'
+        run: |
+          echo "::error::Pages deployment failed after all retries (max backoff 1h)."
+          exit 1

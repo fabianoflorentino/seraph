@@ -126,7 +126,8 @@ existe. A precedência é **flag > ambiente > arquivo > padrão**.
 - Saúde do Worker: `GET /health` retorna JSON com `"status":"ok"`.
 - Falhas de dispatch aparecem nos logs da Cloudflare (`wrangler tail`).
 - Falhas de workflow aparecem em Actions e derrubam o deploy do Pages, mantendo
-  a publicação anterior no ar.
+  a publicação anterior no ar. Um deploy do Pages que falha é repetido com
+  backoff exponencial (1 min, dobrando até 1 h) antes de o job falhar de vez.
 - O painel mostra um banner de erro quando não consegue buscar o snapshot e
   mantém os últimos dados renderizados.
 

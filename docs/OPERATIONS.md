@@ -124,7 +124,8 @@ Precedence is **flag > environment > file > default**.
 - Worker health: `GET /health` returns JSON with `"status":"ok"`.
 - Dispatch failures appear in Cloudflare logs (`wrangler tail`).
 - Workflow failures appear under Actions and fail the Pages deploy, leaving the
-  previous deployment live.
+  previous deployment live. A failed Pages deploy retries with exponential
+  backoff (1 min, doubling up to 1 h) before the job finally fails.
 - The dashboard shows an error banner when the snapshot cannot be fetched; it
   keeps the last rendered data.
 
